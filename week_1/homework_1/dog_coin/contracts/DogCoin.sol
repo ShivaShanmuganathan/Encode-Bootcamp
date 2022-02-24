@@ -5,11 +5,17 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "hardhat/console.sol";
 
 contract DogCoin is ERC20 {
+    
     mapping(address => uint256) private _balances;
+    
     uint256 private _totalSupply;
     address[] public holders;
-    uint[] public holders2;
     
+    
+    event User_Removed(address user);
+    event User_Added(address user);
+
+
     constructor() ERC20("DogCoin", "DC") {
     }
 
@@ -53,11 +59,41 @@ contract DogCoin is ERC20 {
             _balances[from] = fromBalance - amount;
         }
         _balances[to] += amount;
-        holders.push(to);
+        
+        bool address_found = false;
+        
+        for (uint i = 0; i < holders.length; i++) {
+
+            if(holders[i] == from){
+
+                if (balanceOf(from) == 0) {
+
+                    holders[i] = holders[holders.length - 1];
+                    holders.pop();
+                    emit User_Removed(from);
+
+                }
+
+            }
+        
+            if(holders[i] == to){
+
+                address_found = true;
+
+            }    
+        }
+
+        if (!address_found){
+
+            holders.push(to);
+            emit User_Added(to);
+
+        }
 
         emit Transfer(from, to, amount);
 
         _afterTokenTransfer(from, to, amount);
     }
+
 
 }
