@@ -28,7 +28,12 @@ describe("Dog Coin Test", function () {
     console.log("Balance of addr4", parseFloat(ethers.utils.formatEther(await dog_coin.balanceOf(addr4.address))));
 
     console.log(await dog_coin.getHolders());
-    expect((await dog_coin.getHolders()).length == 3);  
+    
+    expect((await dog_coin.getHolders()).length).to.be.equal(3); 
+    expect((await dog_coin.getHolders())[0]).to.be.equal(addr1.address); 
+    expect((await dog_coin.getHolders())[1]).to.be.equal(addr2.address); 
+    expect((await dog_coin.getHolders())[2]).to.be.equal(addr4.address); 
+
 
   });
 });
