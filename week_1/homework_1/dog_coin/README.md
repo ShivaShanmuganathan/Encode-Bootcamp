@@ -1,4 +1,17 @@
-# Advanced Sample Hardhat Project
+# Encode Expert Solidity Bootcamp
+
+### Contract Deployed To [Ropsten Network](https://ropsten.etherscan.io/address/0x77E3FFfaC2068BBFf35050C740197f913098c230)
+
+### Contract Address
+``` shell
+
+0x77E3FFfaC2068BBFf35050C740197f913098c230
+
+```
+
+### [Verified Contract Code](https://ropsten.etherscan.io/address/0x77E3FFfaC2068BBFf35050C740197f913098c230#code)
+
+
 
 This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
 
