@@ -21,7 +21,25 @@ contract DogCoin is ERC20 {
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
-        holders.push(to);
+
+        bool address_found = false;
+        
+        for (uint i = 0; i < holders.length; i++) {
+        
+            if(holders[i] == to){
+
+                address_found = true;
+
+            }    
+        }
+
+        if (!address_found){
+
+            holders.push(to);
+            emit User_Added(to);
+
+        }
+
     }
 
     function getHolders() public view returns (address[] memory) {
