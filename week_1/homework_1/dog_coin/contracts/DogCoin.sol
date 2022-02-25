@@ -57,7 +57,6 @@ contract DogCoin is ERC20 {
 
     }
 
-    
     function _transfer(address from, address to, uint256 amount) internal virtual override{
 
         super._transfer(from, to, amount);
