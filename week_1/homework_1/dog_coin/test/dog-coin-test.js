@@ -22,6 +22,7 @@ describe("Dog Coin Test", function () {
     await expect(dog_coin.connect(addr1).mint(addr1.address, ethers.utils.parseEther("100"))).to.not.emit(dog_coin, "User_Added").withArgs(addr1.address);
     
     await expect(dog_coin.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("50"))).to.emit(dog_coin, "User_Added").withArgs(addr2.address);
+
     await expect(dog_coin.connect(addr3).transfer(addr4.address, ethers.utils.parseEther("100"))).to.emit(dog_coin, "User_Removed").withArgs(addr3.address).to.emit(dog_coin, "User_Added").withArgs(addr4.address);
     
     console.log("Balance of addr1", parseFloat(ethers.utils.formatEther(await dog_coin.balanceOf(addr1.address))));
