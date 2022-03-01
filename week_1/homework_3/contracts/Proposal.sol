@@ -4,9 +4,10 @@ pragma solidity ^0.8.0;
 contract ProposalFactory {
     Proposal[] public deployedProposals;
 
-    function createProposal(uint _minimum, string calldata _description, uint _expiryTime) public {
+    function createProposal(uint _minimum, string calldata _description, uint _expiryTime) public returns (Proposal){
         Proposal newProposal = new Proposal(_minimum, _description, _expiryTime, address(msg.sender));
         deployedProposals.push(newProposal);
+        return newProposal;
     }
 
     function getDeployedProposals() public view returns (Proposal[] memory) {
@@ -54,15 +55,18 @@ contract Proposal {
     function setVote() public onlyProposer{
 
         require(proposal.status == ProposalStatus.PROPOSED, "Proposal is now under voting");
+        require(block.timestamp < proposal.expiryTime , "Proposal Time Has Expired");
         proposal.status = ProposalStatus.VOTING;
 
     }
 
     function upvote() public {
         require(proposal.status == ProposalStatus.VOTING, "Proposal is now not under voting");
+        require(block.timestamp < proposal.expiryTime , "Proposal Time Has Expired");
+        
         proposal.approvalCount++;
 
-        if (proposal.approvalCount-proposal.disApprovalCount  >= proposal.minimumVotes){
+        if (int(proposal.approvalCount)-int(proposal.disApprovalCount)  >= int(proposal.minimumVotes)){
             proposal.status = ProposalStatus.ACCEPTED;
         }
     }
@@ -70,11 +74,19 @@ contract Proposal {
     function downvote() public {
         
         require(proposal.status == ProposalStatus.VOTING, "Proposal is now not under voting");
+        require(block.timestamp < proposal.expiryTime , "Proposal Time Has Expired");
+
         proposal.disApprovalCount++;
 
-        if (proposal.disApprovalCount-proposal.approvalCount  >= proposal.minimumVotes){
+        if (int(proposal.disApprovalCount)-int(proposal.approvalCount)  >= int(proposal.minimumVotes)){
             proposal.status = ProposalStatus.REJECTED;
         }
+
+    }
+
+    function getSummary() public view returns(propose memory){
+
+        return proposal;
 
     }
 

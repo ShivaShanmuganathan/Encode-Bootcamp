@@ -1,19 +1,29 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("Greeter", function () {
-  it("Should return the new greeting once it's changed", async function () {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const greeter = await Greeter.deploy("Hello, world!");
-    await greeter.deployed();
+describe("Proposal Factory", function () {
 
-    expect(await greeter.greet()).to.equal("Hello, world!");
+  before(async function () {
 
-    const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
+    [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();          
 
-    // wait until the transaction is mined
-    await setGreetingTx.wait();
-
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
   });
+  
+  it("Should Deploy Proposal Factory & Create New Proposal Contracts", async function () {
+    
+    const ProposalFactory = await ethers.getContractFactory("ProposalFactory");
+    const Proposal = await ethers.getContractFactory("Proposal");
+    
+    const proposal_factory = await ProposalFactory.deploy();
+    await proposal_factory.deployed();
+    
+
+    proposal = await proposal_factory.createProposal(3, "Hello World Is Awesome", Math.floor(Date.now() / 1000 + 3600));
+
+    console.log("Deployed Proposal Address", await proposal_factory.getDeployedProposals());
+    proposed_contract = await Proposal.attach((await proposal_factory.getDeployedProposals())[0]);
+    
+  });
+
+
 });
