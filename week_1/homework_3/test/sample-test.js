@@ -67,13 +67,17 @@ describe("Proposal Factory", function () {
 
   });
 
+  it("Should upvote in the new proposal contract & move to ACCEPTED status", async function () {  
+    
+    // enum returns 2 because ACCEPTED is in 2 position in enum
+    await proposed_contract.connect(addr1).upvote();
+    await proposed_contract.connect(addr2).upvote();
+    await proposed_contract.connect(addr3).upvote();
+    // await proposed_contract.connect(addr4).downvote();
+    const return_value = (await proposed_contract.getSummary());
+    console.log("Status Of Proposal", return_value.status.toString());
+
+  });
+
   
-
-
-
-
-  
-
-
-
 });
