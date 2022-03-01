@@ -48,6 +48,16 @@ describe("Proposal Factory", function () {
 
   });
 
+  it("Should upvote in the new proposal contract", async function () {  
+    
+  
+    await proposed_contract.connect(addr1).upvote();
+    await proposed_contract.connect(addr2).upvote();
+    const return_value = (await proposed_contract.getSummary());
+    console.log("Approval Count", return_value.approvalCount.toString());
+
+  });
+
 
   
 
