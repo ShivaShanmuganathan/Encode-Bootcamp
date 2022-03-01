@@ -32,6 +32,15 @@ describe("Proposal Factory", function () {
 
   });
 
+  it("Should check the proposer of the new proposal contract", async function () {  
+    
+    const return_value = (await proposed_contract.getSummary());
+    console.log("Proposer Address", return_value.proposer.toString());
+    console.log("Owner Address", owner.address)
+
+  });
+
+  
   
 
 
