@@ -58,6 +58,19 @@ describe("Proposal Factory", function () {
 
   });
 
+  it("Should downvote in the new proposal contract", async function () {  
+    
+    await proposed_contract.connect(addr3).downvote();
+    await proposed_contract.connect(addr4).downvote();
+    const return_value = (await proposed_contract.getSummary());
+    console.log("Disapproval Count", return_value.disApprovalCount.toString());
+
+  });
+
+  
+
+
+
 
   
 
