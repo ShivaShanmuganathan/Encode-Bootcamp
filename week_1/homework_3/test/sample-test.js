@@ -40,7 +40,15 @@ describe("Proposal Factory", function () {
 
   });
 
-  
+  it("Should set voting in the new proposal contract", async function () {  
+    // enum returns 1 because VOTING is in 1 position in enum
+    await proposed_contract.setVote();
+    const return_value = (await proposed_contract.getSummary());
+    console.log(return_value.status.toString());
+
+  });
+
+
   
 
 
