@@ -25,5 +25,15 @@ describe("Proposal Factory", function () {
     
   });
 
+  it("Should return description of proposal in the new proposal contract", async function () {  
+
+    const return_value = (await proposed_contract.getSummary());
+    console.log(return_value.description.toString());
+
+  });
+
+  
+
+
 
 });
