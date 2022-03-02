@@ -22,7 +22,7 @@
 ### Clone Repo & Change to project directory
 ```shell
 git clone https://github.com/ShivaShanmuganathan/Encode-Bootcamp.git
-cd Encode-Bootcamp/week_1/homework_1/dog_coin
+cd Encode-Bootcamp/week_1/homework_2/dog_coin
 ```
 
 ### Install Dependencies
