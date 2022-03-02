@@ -38,10 +38,10 @@ describe("Dog Coin Test", function () {
 
     console.log(await dog_coin.getHolders());
     
-    expect((await dog_coin.getHolders()).length).to.be.equal(3); 
-    expect((await dog_coin.getHolders())[0]).to.be.equal(addr1.address); 
-    expect((await dog_coin.getHolders())[1]).to.be.equal(addr2.address); 
-    expect((await dog_coin.getHolders())[2]).to.be.equal(addr4.address); 
+    expect((await dog_coin.getHolders()).length).to.be.equal(4); 
+    expect((await dog_coin.getHolders())[1]).to.be.equal(addr1.address); 
+    expect((await dog_coin.getHolders())[2]).to.be.equal(addr2.address); 
+    expect((await dog_coin.getHolders())[3]).to.be.equal(addr4.address); 
 
 
   });
