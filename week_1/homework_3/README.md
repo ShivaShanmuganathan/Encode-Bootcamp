@@ -11,25 +11,24 @@ Unit tests are written for that contract
 6. Should downvote in the new proposal contract
 7. Should upvote/downvote in the new proposal contract & move to ACCEPTED/REJECTED status
 
-Try running some of the following tasks:
+# Clone This Repo & Run This Project
 
+
+### Clone Repo & Change to project directory
 ```shell
-npx hardhat accounts
+git clone https://github.com/ShivaShanmuganathan/Encode-Bootcamp.git
+cd Encode-Bootcamp/week_1/homework_3
+```
+
+### Install Dependencies
+```shell
+npm install
+```
+
+### Compile & Test Smart Contract
+```shell
 npx hardhat compile
-npx hardhat clean
 npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.js
-node scripts/deploy.js
-npx eslint '**/*.js'
-npx eslint '**/*.js' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
 ```
 
 # Etherscan verification
