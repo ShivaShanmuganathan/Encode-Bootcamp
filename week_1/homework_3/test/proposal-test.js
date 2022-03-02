@@ -9,7 +9,7 @@ describe("Proposal Factory", function () {
 
   });
   
-  it("Should Deploy Proposal Factory & Create New Proposal Contracts", async function () {
+  it("Should Deploy Proposal Factory & Create New Proposal Contract", async function () {
     
     const ProposalFactory = await ethers.getContractFactory("ProposalFactory");
     const Proposal = await ethers.getContractFactory("Proposal");
