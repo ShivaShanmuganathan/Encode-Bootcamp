@@ -1,8 +1,15 @@
-# Advanced Sample Hardhat Project
+# Proposal Factory Contract
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+This project contains a proposal factory contract, which is used to create proposal [voting] contract -- this contract follows the state machine pattern to transition from PROPOSAL to VOTING to ACCEPTED/REJECTED phases.
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+Unit tests are written for that contract
+1. Should Deploy Proposal Factory & Create New Proposal Contract
+2. Should return description of proposal in the new proposal contract
+3. Should check the proposer of the new proposal contract
+4. Should set voting in the new proposal contract
+5. Should upvote in the new proposal contract
+6. Should downvote in the new proposal contract
+7. Should upvote/downvote in the new proposal contract & move to ACCEPTED/REJECTED status
 
 Try running some of the following tasks:
 
