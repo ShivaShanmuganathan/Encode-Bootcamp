@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.3;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+
 import "hardhat/console.sol";
 
-contract DogCoin is ERC20 {
+contract DogCoin is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpgradeable {
     
     address[] public holders;    
     
@@ -13,8 +18,13 @@ contract DogCoin is ERC20 {
     event User_Added(address user);
 
 
-    constructor() ERC20("DogCoin", "DC") {
+    function initialize() initializer public {
+      __ERC20_init("DogCoin", "DC");
+      __Ownable_init();
+      __UUPSUpgradeable_init();
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
@@ -81,6 +91,5 @@ contract DogCoin is ERC20 {
         }
         
     }
-
 
 }
