@@ -14,19 +14,12 @@ contract DogCoin is ERC20 {
 
 
     constructor() ERC20("DogCoin", "DC") {
-        holders.push(address(0));
     }
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
 
-        // if(holderIndex[to] == 0) {
-        //     holders.push(to);
-        //     holderIndex[to] = holders.length - 1;
-        //     emit User_Added(to);
-        // }
-
-        bool address_found = false;
+        bool address_found;
         
         for (uint i = 0; i < holders.length; i++) {
         
@@ -40,7 +33,6 @@ contract DogCoin is ERC20 {
         if (!address_found){
 
             holders.push(to);
-            holderIndex[to] = holders.length - 1;
             emit User_Added(to);
 
         }
@@ -57,22 +49,7 @@ contract DogCoin is ERC20 {
 
         super._transfer(from, to, amount);
 
-        // if(balanceOf(from) == 0){
-
-        //     holders[holderIndex[from]] = holders[holders.length - 1];
-        //     holderIndex[holders[holders.length - 1]] = holderIndex[from];
-        //     holders.pop();
-        //     holderIndex[from] = 0;
-        //     emit User_Removed(from);
-
-        // }
-
-        // if(holderIndex[to] == 0) {
-        //     holders.push(to);
-        //     holderIndex[to] = holders.length - 1;
-        //     emit User_Added(to);
-        // }
-
+        bool address_found;
 
         
         for (uint i = 0; i < holders.length; i++) {
@@ -83,7 +60,6 @@ contract DogCoin is ERC20 {
 
                     holders[i] = holders[holders.length - 1];
                     holders.pop();
-                    holderIndex[from] = i;
                     emit User_Removed(from);
 
                 }
@@ -100,7 +76,6 @@ contract DogCoin is ERC20 {
         if (!address_found){
 
             holders.push(to);
-            holderIndex[to] = holders.length - 1;
             emit User_Added(to);
 
         }
