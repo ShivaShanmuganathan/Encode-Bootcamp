@@ -12,7 +12,7 @@ import "hardhat/console.sol";
 
 contract DogCoin is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpgradeable {
     
-    address[] public holders;    
+    address[] public holders;
     
     event User_Removed(address user);
     event User_Added(address user);
