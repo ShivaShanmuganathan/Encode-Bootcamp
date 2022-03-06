@@ -58,15 +58,19 @@ contract DogCoin is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpg
     function _transfer(address from, address to, uint256 amount) internal virtual override{
 
         super._transfer(from, to, amount);
-
-        bool address_found;
-
         
+        bool remove_user;
+        bool user_exists;
+        
+        if (balanceOf(from) == 0) {
+            remove_user=true;
+        }
+
         for (uint i = 0; i < holders.length; i++) {
 
-            if(holders[i] == from){
+            if(remove_user){
 
-                if (balanceOf(from) == 0) {
+                if(holders[i] == from){
 
                     holders[i] = holders[holders.length - 1];
                     holders.pop();
@@ -75,21 +79,21 @@ contract DogCoin is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpg
                 }
 
             }
-        
+
             if(holders[i] == to){
 
-                address_found = true;
+                user_exists = true;
 
-            }    
+            }
+
         }
 
-        if (!address_found){
+        if (!user_exists){
 
             holders.push(to);
             emit User_Added(to);
 
         }
-        
     }
 
 }
