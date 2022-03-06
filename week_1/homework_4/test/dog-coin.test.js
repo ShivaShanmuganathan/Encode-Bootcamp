@@ -18,20 +18,20 @@ describe('Dog Coin', function () {
     console.log("Address 3", addr3.address);
     console.log("Address 4", addr4.address);
         
-    await expect(dog_coin_v2.connect(addr1).mint(addr1.address, ethers.utils.parseEther("100"))).to.emit(dog_coin_v2, "User_Added").withArgs(addr1.address);
-    await expect(dog_coin_v2.connect(addr3).mint(addr3.address, ethers.utils.parseEther("100"))).to.emit(dog_coin_v2, "User_Added").withArgs(addr3.address);
+    await expect(dog_coin_v2.connect(addr1).mint(addr1.address, ethers.utils.parseEther("100"))).to.emit(dog_coin_v2, "UserAdded").withArgs(addr1.address);
+    await expect(dog_coin_v2.connect(addr3).mint(addr3.address, ethers.utils.parseEther("100"))).to.emit(dog_coin_v2, "UserAdded").withArgs(addr3.address);
     
-    await expect(dog_coin_v2.connect(addr1).mint(addr1.address, ethers.utils.parseEther("100"))).to.not.emit(dog_coin_v2, "User_Added").withArgs(addr1.address);
+    await expect(dog_coin_v2.connect(addr1).mint(addr1.address, ethers.utils.parseEther("100"))).to.not.emit(dog_coin_v2, "UserAdded").withArgs(addr1.address);
     
-    await expect(dog_coin_v2.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("50"))).to.emit(dog_coin_v2, "User_Added").withArgs(addr2.address);
+    await expect(dog_coin_v2.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("50"))).to.emit(dog_coin_v2, "UserAdded").withArgs(addr2.address);
     
     await dog_coin_v2.connect(addr1).approve(addr2.address, ethers.utils.parseEther("10"));
     
     console.log("Allowance Of", parseFloat(ethers.utils.formatEther(await dog_coin_v2.connect(addr2).allowance(addr1.address, addr2.address))));
     
-    await expect(dog_coin_v2.connect(addr2).transferFrom(addr1.address, addr2.address, ethers.utils.parseEther("10"))).to.not.emit(dog_coin_v2, "User_Added").withArgs(addr2.address);
+    await expect(dog_coin_v2.connect(addr2).transferFrom(addr1.address, addr2.address, ethers.utils.parseEther("10"))).to.not.emit(dog_coin_v2, "UserAdded").withArgs(addr2.address);
 
-    await expect(dog_coin_v2.connect(addr3).transfer(addr4.address, ethers.utils.parseEther("100"))).to.emit(dog_coin_v2, "User_Removed").withArgs(addr3.address).to.emit(dog_coin_v2, "User_Added").withArgs(addr4.address);
+    await expect(dog_coin_v2.connect(addr3).transfer(addr4.address, ethers.utils.parseEther("100"))).to.emit(dog_coin_v2, "UserRemoved").withArgs(addr3.address).to.emit(dog_coin_v2, "UserAdded").withArgs(addr4.address);
     
     console.log("Balance of addr1", parseFloat(ethers.utils.formatEther(await dog_coin_v2.balanceOf(addr1.address))));
     console.log("Balance of addr2", parseFloat(ethers.utils.formatEther(await dog_coin_v2.balanceOf(addr2.address))));
@@ -67,20 +67,20 @@ describe('Dog Coin', function () {
 //     console.log("Address 3", addr3.address);
 //     console.log("Address 4", addr4.address);
         
-//     await expect(dog_coin.connect(addr1).mint(addr1.address, ethers.utils.parseEther("100"))).to.emit(dog_coin, "User_Added").withArgs(addr1.address);
-//     await expect(dog_coin.connect(addr3).mint(addr3.address, ethers.utils.parseEther("100"))).to.emit(dog_coin, "User_Added").withArgs(addr3.address);
+//     await expect(dog_coin.connect(addr1).mint(addr1.address, ethers.utils.parseEther("100"))).to.emit(dog_coin, "UserAdded").withArgs(addr1.address);
+//     await expect(dog_coin.connect(addr3).mint(addr3.address, ethers.utils.parseEther("100"))).to.emit(dog_coin, "UserAdded").withArgs(addr3.address);
     
-//     await expect(dog_coin.connect(addr1).mint(addr1.address, ethers.utils.parseEther("100"))).to.not.emit(dog_coin, "User_Added").withArgs(addr1.address);
+//     await expect(dog_coin.connect(addr1).mint(addr1.address, ethers.utils.parseEther("100"))).to.not.emit(dog_coin, "UserAdded").withArgs(addr1.address);
     
-//     await expect(dog_coin.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("50"))).to.emit(dog_coin, "User_Added").withArgs(addr2.address);
+//     await expect(dog_coin.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("50"))).to.emit(dog_coin, "UserAdded").withArgs(addr2.address);
     
 //     await dog_coin.connect(addr1).approve(addr2.address, ethers.utils.parseEther("10"));
     
 //     console.log("Allowance Of", parseFloat(ethers.utils.formatEther(await dog_coin.connect(addr2).allowance(addr1.address, addr2.address))));
     
-//     await expect(dog_coin.connect(addr2).transferFrom(addr1.address, addr2.address, ethers.utils.parseEther("10"))).to.not.emit(dog_coin, "User_Added").withArgs(addr2.address);
+//     await expect(dog_coin.connect(addr2).transferFrom(addr1.address, addr2.address, ethers.utils.parseEther("10"))).to.not.emit(dog_coin, "UserAdded").withArgs(addr2.address);
 
-//     await expect(dog_coin.connect(addr3).transfer(addr4.address, ethers.utils.parseEther("100"))).to.emit(dog_coin, "User_Removed").withArgs(addr3.address).to.emit(dog_coin, "User_Added").withArgs(addr4.address);
+//     await expect(dog_coin.connect(addr3).transfer(addr4.address, ethers.utils.parseEther("100"))).to.emit(dog_coin, "UserRemoved").withArgs(addr3.address).to.emit(dog_coin, "UserAdded").withArgs(addr4.address);
     
 //     console.log("Balance of addr1", parseFloat(ethers.utils.formatEther(await dog_coin.balanceOf(addr1.address))));
 //     console.log("Balance of addr2", parseFloat(ethers.utils.formatEther(await dog_coin.balanceOf(addr2.address))));

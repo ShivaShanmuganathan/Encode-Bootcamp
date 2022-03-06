@@ -14,11 +14,11 @@ contract DogCoin is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpg
     
     address[] public holders;
     
-    event User_Removed(address user);
-    event User_Added(address user);
+    event UserRemoved(address user);
+    event UserAdded(address user);
 
 
-    function initialize() initializer public {
+    function initialize() public initializer  {
       __ERC20_init("DogCoin", "DC");
       __Ownable_init();
       __UUPSUpgradeable_init();
@@ -29,21 +29,21 @@ contract DogCoin is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpg
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
 
-        bool address_found;
+        bool userExists;
         
         for (uint i = 0; i < holders.length; i++) {
         
             if(holders[i] == to){
 
-                address_found = true;
+                userExists = true;
 
             }    
         }
 
-        if (!address_found){
+        if (!userExists){
 
             holders.push(to);
-            emit User_Added(to);
+            emit UserAdded(to);
 
         }
 
@@ -59,22 +59,22 @@ contract DogCoin is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpg
 
         super._transfer(from, to, amount);
         
-        bool remove_user;
-        bool user_exists;
+        bool removeUser;
+        bool userExists;
         
         if (balanceOf(from) == 0) {
-            remove_user=true;
+            removeUser=true;
         }
 
         for (uint i = 0; i < holders.length; i++) {
 
-            if(remove_user){
+            if(removeUser){
 
                 if(holders[i] == from){
 
                     holders[i] = holders[holders.length - 1];
                     holders.pop();
-                    emit User_Removed(from);
+                    emit UserRemoved(from);
 
                 }
 
@@ -82,16 +82,16 @@ contract DogCoin is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpg
 
             if(holders[i] == to){
 
-                user_exists = true;
+                userExists = true;
 
             }
 
         }
 
-        if (!user_exists){
+        if (!userExists){
 
             holders.push(to);
-            emit User_Added(to);
+            emit UserAdded(to);
 
         }
     }
