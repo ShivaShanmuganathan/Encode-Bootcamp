@@ -1,22 +1,9 @@
 // SPDX-License-Identifier: MIT
-
+import "hardhat/console.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 pragma solidity ^0.8.0;
 
-contract ProposalFactory {
-    Proposal[] public deployedProposals;
-
-    function createProposal(uint _minimum, string calldata _description, uint _expiryTime) public returns (Proposal){
-        Proposal newProposal = new Proposal(_minimum, _description, _expiryTime, address(msg.sender));
-        deployedProposals.push(newProposal);
-        return newProposal;
-    }
-
-    function getDeployedProposals() public view returns (Proposal[] memory) {
-        return deployedProposals;
-    }
-}
-
-contract Proposal {
+contract Proposal is Initializable{
     
     struct propose {
         uint256 minimumVotes;
@@ -41,7 +28,19 @@ contract Proposal {
         _;
     }
 
-    constructor (uint _minimum, string memory _description, uint _expiryTime, address _proposer) {
+    // constructor (uint _minimum, string memory _description, uint _expiryTime, address _proposer) {
+
+    //     proposal.minimumVotes = _minimum;
+    //     proposal.description = _description;
+    //     proposal.expiryTime = _expiryTime;
+    //     proposal.status = ProposalStatus.PROPOSED;
+    //     proposal.proposer = _proposer;
+    //     proposal.approvalCount = 0;
+    //     proposal.disApprovalCount = 0;
+    //     proposer = _proposer;
+    // }
+
+    function initialize(uint _minimum, string memory _description, uint _expiryTime, address _proposer) initializer public {
 
         proposal.minimumVotes = _minimum;
         proposal.description = _description;
@@ -51,6 +50,7 @@ contract Proposal {
         proposal.approvalCount = 0;
         proposal.disApprovalCount = 0;
         proposer = _proposer;
+        
     }
 
     function setVote() public onlyProposer{
