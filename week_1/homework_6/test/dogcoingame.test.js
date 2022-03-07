@@ -35,11 +35,34 @@ describe("Dog-Coin-Game", function () {
 
     // 1 wei
     await dog_coin.connect(addr4).addPlayer(addr4.address, {value: ethers.utils.parseEther("0.000000000000000001")});
-
+    
+    console.log()
     console.log("Number of players", (await dog_coin.numberPlayers()).toString())
-    console.log("Players List", (await dog_coin.players(0)))
+    console.log("Player 0", (await dog_coin.players(0)))
+    console.log()
 
   });
+
+
+  it("Should loop and add 200 players using addPlayer function ", async function () {
+
+    // 1 wei
+    for (let i = 0; i < 198; i++) {
+      await dog_coin.connect(addr1).addPlayer(addr1.address, {value: ethers.utils.parseEther("0.000000000000000001")});
+    }
+    await expect(dog_coin.connect(addr2).addPlayer(addr2.address, {value: ethers.utils.parseEther("0.000000000000000001")})).to.emit(dog_coin, "startPayout");
+
+    console.log()
+    console.log("Number of players", (await dog_coin.numberPlayers()).toString())
+    console.log("Player 0", (await dog_coin.players(0)))
+    console.log("Players 10", (await dog_coin.players(10)))
+    console.log("Players 100", (await dog_coin.players(100)))
+    console.log("Players 199", (await dog_coin.players(199)))
+    console.log()
+
+  });
+
+  
 
   
 
