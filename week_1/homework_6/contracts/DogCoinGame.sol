@@ -3,6 +3,7 @@
 	import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 	contract DogCoinGame is ERC20 {
+
 		
         uint public currentPrize;
         uint256 public numberPlayers;
@@ -12,11 +13,11 @@
 
         event startPayout();
 
-       constructor() ERC20("DogCoin", "DOG") {
+        constructor() ERC20("DogCoin", "DOG") {
 
-       }
+        }
 
-         function addPlayer (address payable _player) payable public {
+        function addPlayer (address payable _player) payable public {
              if(msg.value==1){
                 players.push(_player);
              }
