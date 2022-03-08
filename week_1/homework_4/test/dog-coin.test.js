@@ -5,11 +5,11 @@ describe('Dog Coin', function () {
   it('Deploys Dog Coin', async function () {
     const DogCoinV1 = await ethers.getContractFactory('DogCoin');
 
-    dog_coin_v1 = await upgrades.deployProxy(DogCoinV1, { kind: 'uups' });
+    dog_coin_v1 = await upgrades.deployProxy(DogCoinV1, { kind: 'uups', initializer: 'initialize'});
 
     const DogCoinV2 = await ethers.getContractFactory('DogCoinV2');
 
-    dog_coin_v2 = await upgrades.upgradeProxy(dog_coin_v1.address, DogCoinV2);
+    dog_coin_v2 = await upgrades.upgradeProxy(dog_coin_v1, DogCoinV2);
 
     [addr1, addr2, addr3, addr4] = await hre.ethers.getSigners();
 

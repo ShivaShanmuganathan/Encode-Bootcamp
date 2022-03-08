@@ -10,7 +10,7 @@
   "impls": {
     "1c7037f9cb21435b2fbb1aa1eff8045ace3d48239212a892531c654aabda0573": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0x1474c09bac2e655e0dbd343e1ca8fa3acf489887730f328225869d7dd5c2c6c6",
+      "txHash": "0xb7d28549d68fb0a22a27070faf51999d97807f7acb363662a32b819479227e25",
       "layout": {
         "storage": [
           {
@@ -123,7 +123,7 @@
             "slot": "251",
             "type": "t_array(t_address)dyn_storage",
             "contract": "DogCoin",
-            "src": "contracts/DogCoin.sol:15"
+            "src": "contracts/DogCoin.sol:14"
           }
         ],
         "types": {
@@ -162,7 +162,7 @@
     },
     "bae5e0ff01206e6d451ab130cde5a3a7c1573dea5ea944e3a2b412c28b35a4af": {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0xcc10759b3c9e6764854e790d1f632de6c46202e7886a3184b12264f3eecb5385",
+      "txHash": "0x6f83ebed5790674d584c470ef5f78b8ade2bb9a1b098c3e5ba2a032c5bb93796",
       "layout": {
         "storage": [
           {
@@ -275,7 +275,7 @@
             "slot": "251",
             "type": "t_array(t_address)dyn_storage",
             "contract": "DogCoin",
-            "src": "contracts/DogCoin.sol:15"
+            "src": "contracts/DogCoin.sol:14"
           },
           {
             "label": "version",
