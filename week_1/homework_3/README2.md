@@ -1,6 +1,7 @@
 # Tips and Tricks
 
 **1. No need to initialize variables with default values**
+
 If a variable is not set/initialized, it is assumed to have the default value (0, false, 0x0 etc depending on the data type). If you explicitly initialize it with its default value, you are just wasting gas.
 
 ```
@@ -8,19 +9,33 @@ uint256 hello = 0; //bad, expensive
 uint256 world; //good, cheap
 ```
 
+**2. Custom Errors**
 
-**2. Use short reason strings**
+Starting from Solidity v0.8.4, there is a convenient and gas-efficient way to explain to users why an operation failed through the use of custom errors. Until now, you could already use strings to give more information about failures (e.g., revert("Insufficient funds.");), but they are rather expensive, especially when it comes to deploy cost, and it is difficult to use dynamic information in them.
 
-You can (and should) attach error reason strings along with require statements to make it easier to understand why a contract call reverted. These strings, however, take space in the deployed bytecode. Every reason string takes at least 32 bytes so make sure your string fits in 32 bytes or it will become more expensive.
+Custom errors are defined using the error statement, which can be used inside and outside of contracts (including interfaces and libraries).
 
 ``` 
-require(balance >= amount, "Insufficient balance"); //good
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.4;
 
-require(balance >= amount, "To whomsoever it may concern. I am writing this error message to let you know that the amount you are trying to transfer is unfortunately more than your current balance. Perhaps you made a typo or you are just trying to be a hacker boi. In any case, this transaction is going to revert. Please try again with a lower amount. Warm regards, EVM"; //bad
+error Unauthorized();
+
+contract VendingMachine {
+    address payable owner = payable(msg.sender);
+
+    function withdraw() public {
+        if (msg.sender != owner)
+            revert Unauthorized();
+
+        owner.transfer(address(this).balance);
+    }
+}
 
 ```
 
 **3. Avoid repetitive checks**
+
 There is no need to check the same condition again and again in different forms. Most common redundant checks are due to SafeMath library. SafeMath library checks for underflows and overflows by itself so you don’t need to check the variables yourself.
 ```
 require(balance >= amount); 
