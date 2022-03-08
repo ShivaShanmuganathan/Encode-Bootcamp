@@ -18,7 +18,7 @@ describe("Proposal Factory", function () {
     await proposal_factory.deployed();
     
 
-    proposal = await proposal_factory.createProposal(3, "Hello World Is Awesome", Math.floor(Date.now() / 1000 + 3600));
+    proposal = await proposal_factory.createProposal(3, "Solidity Is Awesome", Math.floor(Date.now() / 1000 + 3600));
 
     console.log("Deployed Proposal Address", await proposal_factory.getDeployedProposals());
     proposed_contract = await Proposal.attach((await proposal_factory.getDeployedProposals())[0]);

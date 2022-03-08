@@ -17,20 +17,29 @@ contract ProposalFactory {
 
 contract Proposal {
     
-    struct propose {
-        uint256 minimumVotes;
-        string description;
-        uint256 expiryTime;
-        ProposalStatus status;
-        address proposer;
-        uint256 approvalCount;
-        uint256 disApprovalCount;
-    }
-    propose public proposal;
+    // struct propose {
+    //     uint256 minimumVotes;
+    //     string description;
+    //     uint256 expiryTime;
+    //     ProposalStatus status;
+    //     address proposer;
+    //     uint256 approvalCount;
+    //     uint256 disApprovalCount;
+    // }
 
+    // propose public proposal;
+
+    // address public proposer;
+
+    bytes32 public description;
+    uint32 public startTime;
+    uint32 public expiryTime;
+    uint32 public approvalCount;
+    uint32 public disapprovalCount;
     address public proposer;
+
     
-    
+
     enum ProposalStatus {PROPOSED, VOTING, ACCEPTED, REJECTED}
 
 

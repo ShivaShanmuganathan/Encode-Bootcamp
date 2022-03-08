@@ -145,12 +145,12 @@ uint256 constant VERSION = block.number
 Variable types
 Size of common data types in Solidity
 
-uint256 is 32 bytes
-uint128 is 16 bytes
-uint64 is 8 bytes
-address (and address payable) is 20 bytes
-bool is 1 byte
-string is usually one byte per character
+- uint256 is 32 bytes
+- uint128 is 16 bytes
+- uint64 is 8 bytes
+- address (and address payable) is 20 bytes
+- bool is 1 byte
+- string is usually one byte per character
 
 ```
     // bad code
