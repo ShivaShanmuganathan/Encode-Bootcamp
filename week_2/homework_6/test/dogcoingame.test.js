@@ -62,6 +62,24 @@ describe("Dog-Coin-Game", function () {
 
   });
 
+  it("Should add winners using addWinner function ", async function () {
+
+    await dog_coin.connect(addr1).addWinner(addr1.address);
+    await dog_coin.connect(addr1).addWinner(addr4.address);
+
+    console.log("Added Addr1 & Addr4 to Winners List");
+
+  });
+
+  it("Should add winners using addWinner function ", async function () {
+
+    await dog_coin.connect(addr1).addWinner(addr1.address);
+    await dog_coin.connect(addr1).addWinner(addr4.address);
+
+    console.log("Added Addr1 & Addr4 to Winners List");
+
+  });
+
   
 
   
@@ -72,5 +90,11 @@ describe("Dog-Coin-Game", function () {
 // LOGICAL ERRORS
 // 1. There is no require statement to ensure that the payment is received, only if payment is received, the function should allow for state changes.
 // 2. Instead of specifying 1 ether, it is specified as just 1, which would only require 1 wei instead of 1 ether
+// 3. Anyone can call the winner function, it is public. Anyone can be added to winner list, without any criteria, even the ones who are not players
+// 4. The payOut Function logic checks if balance of contract is 100 wei instead of 100 ether
+// 5. amountToPay calculation also seems faulty.
+// 6. payWinners function is public, so anyone can add themself to winners list and claim the balance of contract
+// 7. Compiler warns against usage of send function
+
 
 
