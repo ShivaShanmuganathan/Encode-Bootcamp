@@ -13,3 +13,6 @@ You **cannot** \* change the tests, and all the tests must pass.
 
 **Gas Cost Before Optimization**
 ![Image](./gas_before_optimization.JPG)
+
+**Gas Cost After Optimization**
+![Image](./gas_after_optimization.JPG)

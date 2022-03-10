@@ -34,7 +34,7 @@ contract GasContract is Ownable, Constants {
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) public payments;
     History[] public paymentHistory; // when a payment was updated
-    mapping(address => uint256) public whitelist;
+    mapping(address => uint8) public whitelist;
 
     struct Payment {
         uint256 paymentID;
@@ -241,24 +241,22 @@ contract GasContract is Ownable, Constants {
         }
     }
 
-    function addToWhitelist(address _userAddrs, uint256 _tier)
+    function addToWhitelist(address _userAddrs, uint8 _tier)
         public
         onlyAdminOrOwner
     {
+        
         require(
-            _tier < 255,
+            _tier < 255 && _tier > 0,
             "Gas Contract - addToWhitelist function -  tier level should not be greater than 255"
         );
-        whitelist[_userAddrs] = _tier;
-        if (_tier > 3) {
-            whitelist[_userAddrs] -= _tier;
-            whitelist[_userAddrs] = 3;
-        } else if (_tier == 1) {
-            whitelist[_userAddrs] -= _tier;
-            whitelist[_userAddrs] = 1;
-        } else if (_tier > 0 && _tier < 3) {
-            whitelist[_userAddrs] -= _tier;
-            whitelist[_userAddrs] = 2;
+        
+        if (_tier >= 3 ){
+            whitelist[_userAddrs] = 3; 
+        }
+
+        else{
+            whitelist[_userAddrs] = _tier;
         }
 
         emit AddedToWhitelist(_userAddrs, _tier);
