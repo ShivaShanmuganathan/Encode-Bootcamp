@@ -13,7 +13,14 @@ contract Constants {
 }
 
 contract GasContract is Ownable, Constants {
-
+    error Unauthorized();
+    error InsufficientBalance();
+    error NameTooLong();
+    error AmountTooLow();
+    error IncompatibleTier();
+    error IDError();
+    error InvalidAddress();
+    
     uint256 public immutable totalSupply; // cannot be updated
     uint256 public paymentCounter;
     uint256 constant tradePercent = 12;
@@ -47,27 +54,25 @@ contract GasContract is Ownable, Constants {
     }
 
     struct History {
+        uint256 blockNumber;
         uint256 lastUpdate;
         address updatedBy;
-        uint256 blockNumber;
     }
 
-    event AddedToWhitelist(address userAddress, uint256 tier);
+    event AddedToWhitelist(address userAddress, uint8 tier);
 
     modifier onlyAdminOrOwner() {
-        if (checkForAdmin(msg.sender)) {
-            require(
-                checkForAdmin(msg.sender),
-                "Gas Contract Only Admin Check-  Caller not admin"
-            );
+
+        if(checkForAdmin(msg.sender)) {
             _;
-        } else if (msg.sender == contractOwner) {
-            _;
-        } else {
-            revert(
-                "Error in Gas contract - onlyAdminOrOwner modifier : revert happened because the originator of the transaction was not the admin, and furthermore he wasn't the owner of the contract, so he cannot run this function"
-            );
         }
+        else if(msg.sender == contractOwner) {
+            _;
+        }
+        else{
+            revert Unauthorized();
+        }
+
     }
 
     event supplyChanged(address indexed, uint256 indexed);
@@ -117,14 +122,15 @@ contract GasContract is Ownable, Constants {
         return paymentHistory;
     }
 
-    function checkForAdmin(address _user) public view returns (bool admin_) {
-        bool admin = false;
+    function checkForAdmin(address _user) public view returns (bool) {
+        // bool admin = false;
         for (uint256 ii = 0; ii < administrators.length; ii++) {
             if (administrators[ii] == _user) {
-                admin = true;
+                return true;
             }
         }
-        return admin;
+        return false;
+        // return admin;
     }
 
     function balanceOf(address _user) public view returns (uint256 balance_) {
@@ -177,14 +183,15 @@ contract GasContract is Ownable, Constants {
         uint256 _amount,
         string memory _name
     ) public returns (bool status_) {
-        require(
-            balances[msg.sender] >= _amount,
-            "Gas Contract - Transfer function - Sender has insufficient Balance"
-        );
-        require(
-            bytes(_name).length < 9,
-            "Gas Contract - Transfer function -  The recipient name is too long, there is a max length of 8 characters"
-        );
+        
+        if (balances[msg.sender] < _amount) {
+            revert InsufficientBalance();
+        }
+
+        if (bytes(_name).length > 8) {
+            revert NameTooLong();
+        }
+
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
@@ -210,18 +217,30 @@ contract GasContract is Ownable, Constants {
         uint256 _amount,
         PaymentType _type
     ) public onlyAdminOrOwner {
-        require(
-            _ID > 0,
-            "Gas Contract - Update Payment function - ID must be greater than 0"
-        );
-        require(
-            _amount > 0,
-            "Gas Contract - Update Payment function - Amount must be greater than 0"
-        );
-        require(
-            _user != address(0),
-            "Gas Contract - Update Payment function - Administrator must have a valid non zero address"
-        );
+        // require(
+        //     _ID > 0,
+        //     "Gas Contract - Update Payment function - ID must be greater than 0"
+        // );
+        if (_ID == 0) {
+            revert IDError();
+        }
+
+        if (_amount == 0) {
+            revert AmountTooLow();
+        }
+
+        // require(
+        //     _amount > 0,
+        //     "Gas Contract - Update Payment function - Amount must be greater than 0"
+        // );
+        if (_user == address(0)) {
+            revert InvalidAddress();
+        }
+
+        // require(
+        //     _user != address(0),
+        //     "Gas Contract - Update Payment function - Administrator must have a valid non zero address"
+        // );
 
         for (uint256 ii = 0; ii < payments[_user].length; ii++) {
             if (payments[_user][ii].paymentID == _ID) {
@@ -245,11 +264,10 @@ contract GasContract is Ownable, Constants {
         public
         onlyAdminOrOwner
     {
-        
-        require(
-            _tier < 255 && _tier > 0,
-            "Gas Contract - addToWhitelist function -  tier level should not be greater than 255"
-        );
+
+        if(_tier > 254 || _tier == 0) {
+            revert IncompatibleTier();
+        }
         
         if (_tier >= 3 ){
             whitelist[_userAddrs] = 3; 
@@ -263,18 +281,25 @@ contract GasContract is Ownable, Constants {
     }
 
     function whiteTransfer(address _recipient, uint256 _amount) public {
-        require(
-            balances[msg.sender] >= _amount,
-            "Gas Contract - whiteTransfers function - Sender has insufficient Balance"
-        );
-        require(
-            _amount > 3,
-            "Gas Contract - whiteTransfers function - amount to send have to be bigger than 3"
-        );
-        balances[msg.sender] -= _amount;
-        balances[_recipient] += _amount;
-        balances[msg.sender] += whitelist[msg.sender];
-        balances[_recipient] -= whitelist[msg.sender];
+        
+        if (balances[msg.sender] < _amount) {
+            revert InsufficientBalance();
+        }
+
+        if (_amount < 4) {
+            revert AmountTooLow();
+        }
+
+        uint sender_balance = balances[msg.sender];
+        uint recipient_balance = balances[_recipient];
+
+        sender_balance = sender_balance + whitelist[msg.sender] - _amount;
+        recipient_balance = recipient_balance + _amount - whitelist[msg.sender] ;
+
+        balances[msg.sender] = sender_balance;
+        balances[_recipient] = recipient_balance;
+        
         emit WhiteListTransfer(_recipient);
+
     }
 }
