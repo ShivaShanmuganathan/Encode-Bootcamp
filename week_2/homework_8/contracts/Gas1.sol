@@ -224,9 +224,8 @@ contract GasContract is Ownable{
         if (_user == address(0)) {
             revert InvalidAddress();
         }
-        uint payment_length = payments[_user].length;
-
-        for (uint256 ii = 0; ii < payment_length; ii++) {
+        
+        for (uint256 ii = 0; ii < payments[_user].length; ii++) {
 
             Payment storage _payment = payments[_user][ii];
 
