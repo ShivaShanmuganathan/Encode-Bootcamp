@@ -4,15 +4,16 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
-contract Constants {
+// contract Constants {
     
-    uint8 constant tradeFlag = 1;
-    uint8 constant basicFlag = 0;
-    uint8 constant dividendFlag = 1;
+//     uint8 constant tradeFlag = 1;
+//     uint8 constant basicFlag = 0;
+//     uint8 constant dividendFlag = 1;
     
-}
+// }
 
-contract GasContract is Ownable, Constants {
+contract GasContract is Ownable{
+    
     error Unauthorized();
     error InsufficientBalance();
     error NameTooLong();
@@ -23,10 +24,13 @@ contract GasContract is Ownable, Constants {
     
     uint256 public immutable totalSupply; // cannot be updated
     uint256 public paymentCounter;
-    // uint256 constant tradePercent = 12;
-    address immutable contractOwner;
-    // uint256 public tradeMode;
+
     address[5] public administrators; 
+    address immutable contractOwner;
+    uint8 constant tradeFlag = 1;
+    uint8 constant basicFlag = 0;
+    uint8 constant dividendFlag = 1;
+    
 
     enum PaymentType {
         Unknown,
@@ -123,48 +127,42 @@ contract GasContract is Ownable, Constants {
     }
 
     function checkForAdmin(address _user) public view returns (bool) {
-        // bool admin = false;
+        
         for (uint256 ii = 0; ii < administrators.length; ii++) {
             if (administrators[ii] == _user) {
                 return true;
             }
         }
         return false;
-        // return admin;
+        
     }
 
     function balanceOf(address _user) public view returns (uint256) {
-        // uint256 balance = 
         return balances[_user];
     }
 
-    function getTradingMode() public view returns (bool) {
-        // bool mode = false;
+    function getTradingMode() external pure returns (bool) {
+        
         if (tradeFlag == 1 || dividendFlag == 1) {
-            // mode = true;
+            
             return true;
         } else {
-            // mode = false;
+
             return false;
         }
-        // return mode;
+
     }
 
-    // addHistory looks like an to be an internal function
+    // assuming addHistory is an internal function, since it changes state and is called by updatePayment
     function addHistory(address _updateAddress)
         internal
-        // returns (bool status_, bool tradeMode_)
     {
         History memory history;
         history.blockNumber = block.number;
         history.lastUpdate = block.timestamp;
         history.updatedBy = _updateAddress;
         paymentHistory.push(history);
-        // bool[] memory status = new bool[](tradePercent);
-        // for (uint256 i = 0; i < tradePercent; i++) {
-        //     status[i] = true;
-        // }
-        // return (true, _tradeMode);
+        
     }
 
     function getPayments(address _user)
@@ -195,9 +193,8 @@ contract GasContract is Ownable, Constants {
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
+        
         Payment memory payment;
-        // payment.admin = address(0);
-        // payment.adminUpdated = false;
         payment.paymentType = PaymentType.BasicPayment;
         payment.recipient = _recipient;
         payment.amount = _amount;
@@ -205,11 +202,7 @@ contract GasContract is Ownable, Constants {
         payment.paymentID = ++paymentCounter;
         payments[msg.sender].push(payment);
         return true;
-        // bool[] memory status = new bool[](tradePercent);
-        // for (uint256 i = 0; i < tradePercent; i++) {
-        //     status[i] = true;
-        // }
-        // return (status[0] == true);
+        
     }
 
     function updatePayment(
@@ -218,10 +211,7 @@ contract GasContract is Ownable, Constants {
         uint256 _amount,
         PaymentType _type
     ) public onlyAdminOrOwner {
-        // require(
-        //     _ID > 0,
-        //     "Gas Contract - Update Payment function - ID must be greater than 0"
-        // );
+        
         if (_ID == 0) {
             revert IDError();
         }
@@ -230,18 +220,9 @@ contract GasContract is Ownable, Constants {
             revert AmountTooLow();
         }
 
-        // require(
-        //     _amount > 0,
-        //     "Gas Contract - Update Payment function - Amount must be greater than 0"
-        // );
         if (_user == address(0)) {
             revert InvalidAddress();
         }
-
-        // require(
-        //     _user != address(0),
-        //     "Gas Contract - Update Payment function - Administrator must have a valid non zero address"
-        // );
 
         for (uint256 ii = 0; ii < payments[_user].length; ii++) {
             if (payments[_user][ii].paymentID == _ID) {
