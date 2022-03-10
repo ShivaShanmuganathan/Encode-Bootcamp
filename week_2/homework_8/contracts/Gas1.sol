@@ -23,9 +23,9 @@ contract GasContract is Ownable, Constants {
     
     uint256 public immutable totalSupply; // cannot be updated
     uint256 public paymentCounter;
-    uint256 constant tradePercent = 12;
-    address public contractOwner;
-    uint256 public tradeMode;
+    // uint256 constant tradePercent = 12;
+    address immutable contractOwner;
+    // uint256 public tradeMode;
     address[5] public administrators; 
 
     enum PaymentType {
@@ -133,9 +133,9 @@ contract GasContract is Ownable, Constants {
         // return admin;
     }
 
-    function balanceOf(address _user) public view returns (uint256 balance_) {
-        uint256 balance = balances[_user];
-        return balance;
+    function balanceOf(address _user) public view returns (uint256) {
+        // uint256 balance = 
+        return balances[_user];
     }
 
     function getTradingMode() public view returns (bool) {
@@ -150,20 +150,21 @@ contract GasContract is Ownable, Constants {
         // return mode;
     }
 
-    function addHistory(address _updateAddress, bool _tradeMode)
-        public
-        returns (bool status_, bool tradeMode_)
+    // addHistory looks like an to be an internal function
+    function addHistory(address _updateAddress)
+        internal
+        // returns (bool status_, bool tradeMode_)
     {
         History memory history;
         history.blockNumber = block.number;
         history.lastUpdate = block.timestamp;
         history.updatedBy = _updateAddress;
         paymentHistory.push(history);
-        bool[] memory status = new bool[](tradePercent);
-        for (uint256 i = 0; i < tradePercent; i++) {
-            status[i] = true;
-        }
-        return ((status[0] == true), _tradeMode);
+        // bool[] memory status = new bool[](tradePercent);
+        // for (uint256 i = 0; i < tradePercent; i++) {
+        //     status[i] = true;
+        // }
+        // return (true, _tradeMode);
     }
 
     function getPayments(address _user)
@@ -181,7 +182,7 @@ contract GasContract is Ownable, Constants {
         address _recipient,
         uint256 _amount,
         string memory _name
-    ) public returns (bool status_) {
+    ) public returns (bool) {
         
         if (balances[msg.sender] < _amount) {
             revert InsufficientBalance();
@@ -195,14 +196,15 @@ contract GasContract is Ownable, Constants {
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
         Payment memory payment;
-        payment.admin = address(0);
-        payment.adminUpdated = false;
+        // payment.admin = address(0);
+        // payment.adminUpdated = false;
         payment.paymentType = PaymentType.BasicPayment;
         payment.recipient = _recipient;
         payment.amount = _amount;
         payment.recipientName = bytes8(bytes(_name));
         payment.paymentID = ++paymentCounter;
         payments[msg.sender].push(payment);
+        return true;
         // bool[] memory status = new bool[](tradePercent);
         // for (uint256 i = 0; i < tradePercent; i++) {
         //     status[i] = true;
@@ -247,8 +249,8 @@ contract GasContract is Ownable, Constants {
                 payments[_user][ii].admin = _user;
                 payments[_user][ii].paymentType = _type;
                 payments[_user][ii].amount = _amount;
-                bool tradingMode = getTradingMode();
-                addHistory(_user, tradingMode);
+                // bool tradingMode = getTradingMode();
+                addHistory(_user);
                 emit PaymentUpdated(
                     msg.sender,
                     _ID,
