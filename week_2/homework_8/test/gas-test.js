@@ -145,7 +145,7 @@ describe("Gas1", function () {
     let addrArray1 = [];
     let addrArray2 = [];
     let addrArray3 = [];
-    for (let i = 0; i < 99; i++) {
+    for (let i = 0; i < 9; i++) {
       let wallet = ethers.Wallet.createRandom();
       addrArray1.push(wallet.address);
     }
@@ -157,7 +157,7 @@ describe("Gas1", function () {
       await tx1.wait();
     });
 
-    for (let i = 0; i < 199; i++) {
+    for (let i = 0; i < 19; i++) {
       let wallet = ethers.Wallet.createRandom();
       addrArray2.push(wallet.address);
     }
@@ -166,7 +166,7 @@ describe("Gas1", function () {
       let tx2 = await gasContract.addToWhitelist(element, 2);
       await tx2.wait();
     });
-    for (let i = 0; i < 299; i++) {
+    for (let i = 0; i < 29; i++) {
       let wallet = ethers.Wallet.createRandom();
       addrArray3.push(wallet.address);
     }

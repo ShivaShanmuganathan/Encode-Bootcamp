@@ -6,23 +6,34 @@ import "hardhat/console.sol";
 
 contract GasContract is Ownable{
     
-    error Unauthorized();
-    error InsufficientBalance();
-    error NameTooLong();
-    error AmountTooLow();
-    error IncompatibleTier();
-    error IDError();
-    error InvalidAddress();
-    
     uint256 public immutable totalSupply; // cannot be updated
     uint256 public paymentCounter;
+    // 2 slots
 
     address[5] public administrators; 
+    // 20 bytes each
+    // 5 slots
     address immutable contractOwner;
 
     uint8 constant tradeFlag = 1;
     uint8 constant basicFlag = 0;
     uint8 constant dividendFlag = 1;
+
+    struct Payment {
+        uint256 paymentID; // 1 slot
+        bool adminUpdated; // 1 bit
+        PaymentType paymentType; 
+        address recipient; // 20 bytes 
+        bytes8 recipientName; // max 8 characters
+        address admin; // administrators address
+        uint256 amount; // 1 slot
+    }
+
+    struct History {
+        address updatedBy;
+        uint256 blockNumber;
+        uint256 lastUpdate;        
+    }
     
 
     enum PaymentType {
@@ -40,23 +51,24 @@ contract GasContract is Ownable{
     History[] public paymentHistory; // when a payment was updated
     mapping(address => uint8) public whitelist;
 
-    struct Payment {
-        uint256 paymentID;
-        bool adminUpdated;
-        PaymentType paymentType;
-        address recipient;
-        bytes8 recipientName; // max 8 characters
-        address admin; // administrators address
-        uint256 amount;
-    }
-
-    struct History {
-        uint256 blockNumber;
-        uint256 lastUpdate;
-        address updatedBy;
-    }
-
     event AddedToWhitelist(address userAddress, uint8 tier);
+    event supplyChanged(address indexed, uint256 indexed);
+    event Transfer(address recipient, uint256 amount);
+    event PaymentUpdated(
+        address admin,
+        uint256 ID,
+        uint256 amount,
+        bytes8 recipient
+    );
+    event WhiteListTransfer(address indexed);
+
+    error Unauthorized();
+    error InsufficientBalance();
+    error NameTooLong();
+    error AmountTooLow();
+    error IncompatibleTier();
+    error IDError();
+    error InvalidAddress();
 
     modifier onlyAdminOrOwner() {
 
@@ -72,21 +84,11 @@ contract GasContract is Ownable{
 
     }
 
-    event supplyChanged(address indexed, uint256 indexed);
-    event Transfer(address recipient, uint256 amount);
-    event PaymentUpdated(
-        address admin,
-        uint256 ID,
-        uint256 amount,
-        bytes8 recipient
-    );
-    event WhiteListTransfer(address indexed);
-
     constructor(address[] memory _admins, uint256 _totalSupply) {
         
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
-
+        
         for (uint256 ii = 0; ii < administrators.length; ii++) {
 
             if (_admins[ii] != address(0)) {
@@ -113,13 +115,14 @@ contract GasContract is Ownable{
     }
 
     function getPaymentHistory()
-        public
+        external
+        view
         returns (History[] memory paymentHistory_)
     {
         return paymentHistory;
     }
 
-    function checkForAdmin(address _user) public view returns (bool) {
+    function checkForAdmin(address _user) private view returns (bool) {
         
         for (uint256 ii = 0; ii < administrators.length; ii++) {
             if (administrators[ii] == _user) {
@@ -130,7 +133,7 @@ contract GasContract is Ownable{
         
     }
 
-    function balanceOf(address _user) public view returns (uint256) {
+    function balanceOf(address _user) external view returns (uint256) {
         return balances[_user];
     }
 
@@ -148,7 +151,7 @@ contract GasContract is Ownable{
 
     // assuming addHistory is an internal function, since it changes state and is called by updatePayment
     function addHistory(address _updateAddress)
-        internal
+        private
     {
         History memory history;
         history.blockNumber = block.number;
@@ -159,7 +162,7 @@ contract GasContract is Ownable{
     }
 
     function getPayments(address _user)
-        public
+        external
         view
         returns (Payment[] memory payments_)
     {
@@ -172,7 +175,7 @@ contract GasContract is Ownable{
     function transfer(
         address _recipient,
         uint256 _amount,
-        string memory _name
+        string calldata _name
     ) public returns (bool) {
         
         if (balances[msg.sender] < _amount) {
@@ -188,11 +191,16 @@ contract GasContract is Ownable{
         emit Transfer(_recipient, _amount);
         
         Payment memory payment;
-        payment.paymentType = PaymentType.BasicPayment;
-        payment.recipient = _recipient;
-        payment.amount = _amount;
-        payment.recipientName = bytes8(bytes(_name));
-        payment.paymentID = ++paymentCounter;
+        payment = Payment({
+            recipientName : bytes8(bytes(_name)),
+            admin: address(0),
+            paymentID : ++paymentCounter,
+            amount :_amount,
+            adminUpdated: false,
+            recipient :_recipient,
+            paymentType: PaymentType.BasicPayment
+        });
+        
         payments[msg.sender].push(payment);
         return true;
         
@@ -203,7 +211,7 @@ contract GasContract is Ownable{
         uint256 _ID,
         uint256 _amount,
         PaymentType _type
-    ) public onlyAdminOrOwner {
+    ) external onlyAdminOrOwner {
         
         if (_ID == 0) {
             revert IDError();
@@ -216,27 +224,35 @@ contract GasContract is Ownable{
         if (_user == address(0)) {
             revert InvalidAddress();
         }
+        uint payment_length = payments[_user].length;
 
-        for (uint256 ii = 0; ii < payments[_user].length; ii++) {
-            if (payments[_user][ii].paymentID == _ID) {
-                payments[_user][ii].adminUpdated = true;
-                payments[_user][ii].admin = _user;
-                payments[_user][ii].paymentType = _type;
-                payments[_user][ii].amount = _amount;
-                // bool tradingMode = getTradingMode();
+        for (uint256 ii = 0; ii < payment_length; ii++) {
+
+            Payment storage _payment = payments[_user][ii];
+
+            if (_payment.paymentID == _ID) {
+                
+                _payment.adminUpdated = true;
+                _payment.admin = _user;
+                _payment.paymentType = _type;
+                _payment.amount = _amount;
+                
                 addHistory(_user);
                 emit PaymentUpdated(
                     msg.sender,
                     _ID,
                     _amount,
-                    payments[_user][ii].recipientName
+                    _payment.recipientName
                 );
+
+                payments[_user][ii] = _payment;
             }
+
         }
     }
 
     function addToWhitelist(address _userAddrs, uint8 _tier)
-        public
+        external
         onlyAdminOrOwner
     {
 
@@ -255,7 +271,7 @@ contract GasContract is Ownable{
         emit AddedToWhitelist(_userAddrs, _tier);
     }
 
-    function whiteTransfer(address _recipient, uint256 _amount) public {
+    function whiteTransfer(address _recipient, uint256 _amount) external {
         
         if (balances[msg.sender] < _amount) {
             revert InsufficientBalance();
