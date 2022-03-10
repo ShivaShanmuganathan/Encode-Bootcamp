@@ -1,20 +1,26 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.0;
+pragma solidity 0.8.9;
+
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 contract Constants {
-    uint256 public tradeFlag = 1;
-    uint256 public basicFlag = 0;
-    uint256 public dividendFlag = 1;
+    
+    uint8 constant tradeFlag = 1;
+    uint8 constant basicFlag = 0;
+    uint8 constant dividendFlag = 1;
+    
 }
 
 contract GasContract is Ownable, Constants {
-    uint256 public totalSupply; // cannot be updated
+
+    uint256 public immutable totalSupply; // cannot be updated
     uint256 public paymentCounter;
-    uint256 public tradePercent = 12;
+    uint256 constant tradePercent = 12;
     address public contractOwner;
     uint256 public tradeMode;
-    address[5] public administrators;
+    address[5] public administrators; 
+
     enum PaymentType {
         Unknown,
         BasicPayment,
@@ -22,7 +28,8 @@ contract GasContract is Ownable, Constants {
         Dividend,
         GroupPayment
     }
-    PaymentType constant defaultPayment = PaymentType.Unknown;
+
+    // PaymentType constant defaultPayment = PaymentType.Unknown;
 
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) public payments;
@@ -34,7 +41,7 @@ contract GasContract is Ownable, Constants {
         bool adminUpdated;
         PaymentType paymentType;
         address recipient;
-        string recipientName; // max 8 characters
+        bytes8 recipientName; // max 8 characters
         address admin; // administrators address
         uint256 amount;
     }
@@ -69,29 +76,38 @@ contract GasContract is Ownable, Constants {
         address admin,
         uint256 ID,
         uint256 amount,
-        string recipient
+        bytes8 recipient
     );
     event WhiteListTransfer(address indexed);
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
+        
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
 
         for (uint256 ii = 0; ii < administrators.length; ii++) {
+
             if (_admins[ii] != address(0)) {
+                
                 administrators[ii] = _admins[ii];
+
                 if (_admins[ii] == msg.sender) {
-                    balances[msg.sender] = totalSupply;
-                } else {
+                
+                    balances[msg.sender] = _totalSupply;
+                    emit supplyChanged(_admins[ii], _totalSupply);
+
+                } 
+
+                else {
+
                     balances[_admins[ii]] = 0;
-                }
-                if (_admins[ii] == msg.sender) {
-                    emit supplyChanged(_admins[ii], totalSupply);
-                } else if (_admins[ii] != msg.sender) {
                     emit supplyChanged(_admins[ii], 0);
+
                 }
+
             }
         }
+    
     }
 
     function getPaymentHistory()
@@ -116,14 +132,16 @@ contract GasContract is Ownable, Constants {
         return balance;
     }
 
-    function getTradingMode() public view returns (bool mode_) {
-        bool mode = false;
+    function getTradingMode() public view returns (bool) {
+        // bool mode = false;
         if (tradeFlag == 1 || dividendFlag == 1) {
-            mode = true;
+            // mode = true;
+            return true;
         } else {
-            mode = false;
+            // mode = false;
+            return false;
         }
-        return mode;
+        // return mode;
     }
 
     function addHistory(address _updateAddress, bool _tradeMode)
@@ -157,7 +175,7 @@ contract GasContract is Ownable, Constants {
     function transfer(
         address _recipient,
         uint256 _amount,
-        string calldata _name
+        string memory _name
     ) public returns (bool status_) {
         require(
             balances[msg.sender] >= _amount,
@@ -176,7 +194,7 @@ contract GasContract is Ownable, Constants {
         payment.paymentType = PaymentType.BasicPayment;
         payment.recipient = _recipient;
         payment.amount = _amount;
-        payment.recipientName = _name;
+        payment.recipientName = bytes8(bytes(_name));
         payment.paymentID = ++paymentCounter;
         payments[msg.sender].push(payment);
         bool[] memory status = new bool[](tradePercent);
