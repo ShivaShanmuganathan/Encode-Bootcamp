@@ -4,14 +4,6 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
-// contract Constants {
-    
-//     uint8 constant tradeFlag = 1;
-//     uint8 constant basicFlag = 0;
-//     uint8 constant dividendFlag = 1;
-    
-// }
-
 contract GasContract is Ownable{
     
     error Unauthorized();
@@ -27,6 +19,7 @@ contract GasContract is Ownable{
 
     address[5] public administrators; 
     address immutable contractOwner;
+
     uint8 constant tradeFlag = 1;
     uint8 constant basicFlag = 0;
     uint8 constant dividendFlag = 1;
