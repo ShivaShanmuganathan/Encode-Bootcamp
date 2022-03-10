@@ -171,10 +171,9 @@ contract GasContract is Ownable, Constants {
         view
         returns (Payment[] memory payments_)
     {
-        require(
-            _user != address(0),
-            "Gas Contract - getPayments function - User must have a valid non zero address"
-        );
+        if (_user == address(0)) {
+            revert InvalidAddress();
+        }
         return payments[_user];
     }
 
@@ -204,11 +203,11 @@ contract GasContract is Ownable, Constants {
         payment.recipientName = bytes8(bytes(_name));
         payment.paymentID = ++paymentCounter;
         payments[msg.sender].push(payment);
-        bool[] memory status = new bool[](tradePercent);
-        for (uint256 i = 0; i < tradePercent; i++) {
-            status[i] = true;
-        }
-        return (status[0] == true);
+        // bool[] memory status = new bool[](tradePercent);
+        // for (uint256 i = 0; i < tradePercent; i++) {
+        //     status[i] = true;
+        // }
+        // return (status[0] == true);
     }
 
     function updatePayment(
