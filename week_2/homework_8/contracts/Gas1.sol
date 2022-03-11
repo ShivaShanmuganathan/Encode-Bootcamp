@@ -195,18 +195,18 @@ contract GasContract is Ownable{
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
         
-        Payment memory payment;
-        payment = Payment({
-            recipientName : bytes8(bytes(_name)),
-            admin: address(0),
-            paymentID : ++paymentCounter,
-            amount :_amount,
-            adminUpdated: false,
-            recipient :_recipient,
-            paymentType: PaymentType.BasicPayment
-        });
+        // Payment memory payment;
+        // payment = ;
         
-        payments[msg.sender].push(payment);
+        payments[msg.sender].push(Payment(
+            ++paymentCounter,
+            false,
+            PaymentType.BasicPayment,
+            _recipient,
+            bytes8(bytes(_name)),
+            address(0),
+            _amount));
+
         return true;
         
     }
@@ -237,8 +237,8 @@ contract GasContract is Ownable{
             if (_payment.paymentID == _ID) {
                 
                 _payment.adminUpdated = true;
-                _payment.admin = _user;
                 _payment.paymentType = _type;
+                _payment.admin = _user;
                 _payment.amount = _amount;
                 
                 addHistory(_user);
