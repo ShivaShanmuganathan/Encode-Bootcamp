@@ -20,19 +20,32 @@ describe("Gas1", function () {
     await gasContract.deployed();
   });
   it("Check that admins have been added", async function () {
-    expect(await gasContract.administrators(0)).to.equal(
-      "0x3243Ed9fdCDE2345890DDEAf6b083CA4cF0F68f2"
+    
+    expect((await gasContract.admins("0x3243Ed9fdCDE2345890DDEAf6b083CA4cF0F68f2")).toString()).to.equal(
+      "true"
     );
-    expect(await gasContract.administrators(1)).to.equal(
-      "0x2b263f55Bf2125159Ce8Ec2Bb575C649f822ab46"
+    expect((await gasContract.admins("0x2b263f55Bf2125159Ce8Ec2Bb575C649f822ab46")).toString()).to.equal(
+      "true"
     );
-    expect(await gasContract.administrators(2)).to.equal(
-      "0x0eD94Bc8435F3189966a49Ca1358a55d871FC3Bf"
+    expect((await gasContract.admins("0x0eD94Bc8435F3189966a49Ca1358a55d871FC3Bf")).toString()).to.equal(
+      "true"
     );
-    expect(await gasContract.administrators(3)).to.equal(
-      "0xeadb3d065f8d15cc05e92594523516aD36d1c834"
+    expect((await gasContract.admins("0xeadb3d065f8d15cc05e92594523516aD36d1c834")).toString()).to.equal(
+      "true"
     );
-    expect(await gasContract.administrators(4)).to.equal(owner.address);
+    expect((await gasContract.admins(owner.address)).toString()).to.equal(
+      "true"
+    );
+    // expect(await gasContract.administrators(1)).to.equal(
+    //   "0x2b263f55Bf2125159Ce8Ec2Bb575C649f822ab46"
+    // );
+    // expect(await gasContract.administrators(2)).to.equal(
+    //   "0x0eD94Bc8435F3189966a49Ca1358a55d871FC3Bf"
+    // );
+    // expect(await gasContract.administrators(3)).to.equal(
+    //   "0xeadb3d065f8d15cc05e92594523516aD36d1c834"
+    // );
+    // expect(await gasContract.administrators(4)).to.equal(owner.address);
   });
   it("Checks that the total supply is 10000", async function () {
     let supply = await gasContract.totalSupply();

@@ -10,7 +10,8 @@ contract GasContract is Ownable{
     uint256 public paymentCounter;
     // 2 slots
 
-    address[5] public administrators; 
+    // address[5] public administrators; 
+    mapping (address => bool) public admins;
     // 20 bytes each
     // 5 slots
     address immutable contractOwner;
@@ -18,6 +19,7 @@ contract GasContract is Ownable{
     uint8 constant tradeFlag = 1;
     uint8 constant basicFlag = 0;
     uint8 constant dividendFlag = 1;
+    uint8 constant adminLen = 5;
 
     struct Payment {
         uint256 paymentID; // 1 slot
@@ -89,11 +91,11 @@ contract GasContract is Ownable{
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
         
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
+        for (uint256 ii = 0; ii < adminLen; ii++) {
 
             if (_admins[ii] != address(0)) {
                 
-                administrators[ii] = _admins[ii];
+                admins[_admins[ii]] = true;
 
                 if (_admins[ii] == msg.sender) {
                 
@@ -111,6 +113,7 @@ contract GasContract is Ownable{
 
             }
         }
+
     
     }
 
@@ -123,13 +126,15 @@ contract GasContract is Ownable{
     }
 
     function checkForAdmin(address _user) private view returns (bool) {
+
+        return admins[_user];
         
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
-            if (administrators[ii] == _user) {
-                return true;
-            }
-        }
-        return false;
+        // for (uint256 ii = 0; ii < adminLen; ii++) {
+        //     if (administrators[ii] == _user) {
+        //         return true;
+        //     }
+        // }
+        // return false;
         
     }
 
