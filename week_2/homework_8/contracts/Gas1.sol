@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "hardhat/console.sol";
 
 contract GasContract is Ownable{
@@ -20,6 +21,10 @@ contract GasContract is Ownable{
     uint8 constant basicFlag = 0;
     uint8 constant dividendFlag = 1;
     uint8 constant adminLen = 5;
+
+    bytes32 public whitelistMerkleRoot1;
+    bytes32 public whitelistMerkleRoot2;
+    bytes32 public whitelistMerkleRoot3;
 
     struct Payment {
         uint256 paymentID; // 1 slot
@@ -94,34 +99,53 @@ contract GasContract is Ownable{
                     balances[_admin] = _totalSupply;
                     emit supplyChanged(_admin, _totalSupply);
                 } 
-                // else {
-                //     balances[_admins[ii]] = 0;
-                //     emit supplyChanged(_admins[ii], 0);
-                // }
+                
             }
         }
     
     }
 
-    function addToWhitelist(address _userAddrs, uint8 _tier)
-        external
-        onlyAdminOrOwner
+    function addToWhitelist(bytes32 merkleRoot1, bytes32 merkleRoot2, bytes32 merkleRoot3) 
+    external 
+    onlyAdminOrOwner
     {
-
-        if(_tier > 254 || _tier == 0) {
-            revert IncompatibleTier();
-        }
-        
-        if (_tier >= 3 ){
-            whitelist[_userAddrs] = 3; 
-        }
-
-        else{
-            whitelist[_userAddrs] = _tier;
-        }
-
-        emit AddedToWhitelist(_userAddrs, _tier);
+        whitelistMerkleRoot1 = merkleRoot1;
+        whitelistMerkleRoot2 = merkleRoot2;
+        whitelistMerkleRoot3 = merkleRoot3;
     }
+
+    function checkWhitelist(address user, bytes32[] calldata merkleProof) 
+    public
+    view 
+    returns (uint8)
+    {
+        if (MerkleProof.verify(
+                merkleProof,
+                whitelistMerkleRoot1,
+                keccak256(abi.encodePacked(user))
+        )){
+            return 1;
+        } 
+        else if (MerkleProof.verify(
+                merkleProof,
+                whitelistMerkleRoot2,
+                keccak256(abi.encodePacked(user))
+        )){
+            return 2;
+        }
+        else if (MerkleProof.verify(
+                merkleProof,
+                whitelistMerkleRoot3,
+                keccak256(abi.encodePacked(user))
+        )) {
+            return 3;
+        }
+
+        else {
+            return 0;
+        }
+    }
+
 
 
     function transfer(
@@ -157,7 +181,8 @@ contract GasContract is Ownable{
         return true;   
     }
 
-    function whiteTransfer(address _recipient, uint256 _amount) external {
+
+    function whiteTransfer(address _recipient, uint256 _amount, bytes32[] calldata merkleProof) external {
         
         if (balances[msg.sender] < _amount) {
             revert InsufficientBalance();
@@ -166,12 +191,13 @@ contract GasContract is Ownable{
         if (_amount < 4) {
             revert AmountTooLow();
         }
+        
 
         uint sender_balance = balances[msg.sender];
         uint recipient_balance = balances[_recipient];
 
-        sender_balance = sender_balance + whitelist[msg.sender] - _amount;
-        recipient_balance = recipient_balance + _amount - whitelist[msg.sender] ;
+        sender_balance = sender_balance + checkWhitelist(msg.sender, merkleProof) - _amount;
+        recipient_balance = recipient_balance + _amount - checkWhitelist(msg.sender, merkleProof);
 
         balances[msg.sender] = sender_balance;
         balances[_recipient] = recipient_balance;
@@ -188,19 +214,6 @@ contract GasContract is Ownable{
     {
         return paymentHistory;
     }
-
-    // function checkForAdmin(address _user) private view returns (bool) {
-
-        // return admins[_user];
-        
-        // for (uint256 ii = 0; ii < adminLen; ii++) {
-        //     if (administrators[ii] == _user) {
-        //         return true;
-        //     }
-        // }
-        // return false;
-        
-    // }
 
     function balanceOf(address _user) external view returns (uint256) {
         return balances[_user];

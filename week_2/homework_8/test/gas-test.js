@@ -1,5 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { MerkleTree } = require("merkletreejs");
+const keccak256 = require("keccak256")
 
 describe("Gas1", function () {
   let gasContract;
@@ -107,12 +109,16 @@ describe("Gas1", function () {
   //CAN BE adjusted to a level
   it("add users to whitelist and validate key users are added with correct tier", async function () {
     await addToWhitelist();
-    let whitelistAddr1 = await gasContract.whitelist(addr1.address);
-    expect(parseInt(whitelistAddr1)).to.equal(1);
-    let whitelistAddr2 = await gasContract.whitelist(addr2.address);
-    expect(parseInt(whitelistAddr2)).to.equal(2);
-    let whitelistAddr3 = await gasContract.whitelist(addr3.address);
-    expect(parseInt(whitelistAddr3)).to.equal(3);
+    const proof = merkleTree1.getHexProof(keccak256(addr1.address))
+    expect(await gasContract.checkWhitelist(addr2.address, proof)).to.eq(0)
+    // console.log("KECCAK256 Address1",keccak256(addr1.address));
+
+    // let whitelistAddr1 = await gasContract.whitelist(addr1.address);
+    // expect(parseInt(whitelistAddr1)).to.equal(1);
+    // let whitelistAddr2 = await gasContract.whitelist(addr2.address);
+    // expect(parseInt(whitelistAddr2)).to.equal(2);
+    // let whitelistAddr3 = await gasContract.whitelist(addr3.address);
+    // expect(parseInt(whitelistAddr3)).to.equal(3);
   });
   it("whitelist transfer works", async function () {
     await addToWhitelist();
@@ -130,15 +136,15 @@ describe("Gas1", function () {
     let sendValue3 = 50;
     const whiteTransferTx1 = await gasContract
       .connect(addr1)
-      .whiteTransfer(recipient1.address, sendValue1);
+      .whiteTransfer(recipient1.address, sendValue1, merkleTree1.getHexProof(keccak256(addr1.address)));
     await whiteTransferTx1.wait();
     const whiteTransferTx2 = await gasContract
       .connect(addr2)
-      .whiteTransfer(recipient2.address, sendValue2);
+      .whiteTransfer(recipient2.address, sendValue2, merkleTree2.getHexProof(keccak256(addr2.address)));
     await whiteTransferTx2.wait();
     const whiteTransferTx3 = await gasContract
       .connect(addr3)
-      .whiteTransfer(recipient3.address, sendValue3);
+      .whiteTransfer(recipient3.address, sendValue3, merkleTree3.getHexProof(keccak256(addr3.address)));
     await whiteTransferTx3.wait();
     let rec1Balance = await gasContract.balanceOf(recipient1.address);
     let rec2Balance = await gasContract.balanceOf(recipient2.address);
@@ -158,35 +164,71 @@ describe("Gas1", function () {
     let addrArray1 = [];
     let addrArray2 = [];
     let addrArray3 = [];
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 99; i++) {
       let wallet = ethers.Wallet.createRandom();
       addrArray1.push(wallet.address);
     }
+    addrArray1.push(addr1.address);
 
-    let tx0 = await gasContract.addToWhitelist(addr1.address, 1);
-    await tx0.wait();
-    addrArray1.forEach(async (element) => {
-      let tx1 = await gasContract.addToWhitelist(element, 1);
-      await tx1.wait();
-    });
-
-    for (let i = 0; i < 19; i++) {
+    for (let i = 0; i < 199; i++) {
       let wallet = ethers.Wallet.createRandom();
       addrArray2.push(wallet.address);
     }
     addrArray2.push(addr2.address);
-    addrArray2.forEach(async (element) => {
-      let tx2 = await gasContract.addToWhitelist(element, 2);
-      await tx2.wait();
-    });
-    for (let i = 0; i < 29; i++) {
+
+    for (let i = 0; i < 299; i++) {
       let wallet = ethers.Wallet.createRandom();
       addrArray3.push(wallet.address);
     }
     addrArray3.push(addr3.address);
-    addrArray3.forEach(async (element) => {
-      let tx3 = await gasContract.addToWhitelist(element, 3);
-      await tx3.wait();
-    });
+
+    merkleTree1 = new MerkleTree(
+      addrArray1,
+      keccak256,
+      { hashLeaves: true, sortPairs: true }
+    )
+
+    merkleTree2 = new MerkleTree(
+      addrArray2,
+      keccak256,
+      { hashLeaves: true, sortPairs: true }
+    )
+
+    merkleTree3 = new MerkleTree(
+      addrArray3,
+      keccak256,
+      { hashLeaves: true, sortPairs: true }
+    )
+
+    const root1 = merkleTree1.getHexRoot();
+    const root2 = merkleTree2.getHexRoot();
+    const root3 = merkleTree3.getHexRoot();
+
+
+    let tx0 = await gasContract.addToWhitelist(root1, root2, root3);
+    await tx0.wait();
+    // addrArray1.forEach(async (element) => {
+    //   let tx1 = await gasContract.addToWhitelist(element, 1);
+    //   await tx1.wait();
+    // });
+
+    // for (let i = 0; i < 19; i++) {
+    //   let wallet = ethers.Wallet.createRandom();
+    //   addrArray2.push(wallet.address);
+    // }
+    // addrArray2.push(addr2.address);
+    // addrArray2.forEach(async (element) => {
+    //   let tx2 = await gasContract.addToWhitelist(element, 2);
+    //   await tx2.wait();
+    // });
+    // for (let i = 0; i < 29; i++) {
+    //   let wallet = ethers.Wallet.createRandom();
+    //   addrArray3.push(wallet.address);
+    // }
+    // addrArray3.push(addr3.address);
+    // addrArray3.forEach(async (element) => {
+    //   let tx3 = await gasContract.addToWhitelist(element, 3);
+    //   await tx3.wait();
+    // });
   }
 });
