@@ -86,30 +86,100 @@ contract GasContract is Ownable{
         totalSupply = _totalSupply;
         
         for (uint256 ii = 0; ii < adminLen; ii++) {
-
-            if (_admins[ii] != address(0)) {
+            address _admin = _admins[ii];
+            if (_admin != address(0)) {
+                admins[_admin] = true;
                 
-                admins[_admins[ii]] = true;
-
-                if (_admins[ii] == msg.sender) {
-                
-                    balances[msg.sender] = _totalSupply;
-                    emit supplyChanged(_admins[ii], _totalSupply);
-
+                if (_admin == contractOwner) {
+                    balances[_admin] = _totalSupply;
+                    emit supplyChanged(_admin, _totalSupply);
                 } 
-
-                else {
-
-                    balances[_admins[ii]] = 0;
-                    emit supplyChanged(_admins[ii], 0);
-
-                }
-
+                // else {
+                //     balances[_admins[ii]] = 0;
+                //     emit supplyChanged(_admins[ii], 0);
+                // }
             }
         }
-
     
     }
+
+    function addToWhitelist(address _userAddrs, uint8 _tier)
+        external
+        onlyAdminOrOwner
+    {
+
+        if(_tier > 254 || _tier == 0) {
+            revert IncompatibleTier();
+        }
+        
+        if (_tier >= 3 ){
+            whitelist[_userAddrs] = 3; 
+        }
+
+        else{
+            whitelist[_userAddrs] = _tier;
+        }
+
+        emit AddedToWhitelist(_userAddrs, _tier);
+    }
+
+
+    function transfer(
+        address _recipient,
+        uint256 _amount,
+        string calldata _name
+    ) public returns (bool) {
+        
+        if (balances[msg.sender] < _amount) {
+            revert InsufficientBalance();
+        }
+
+        if (bytes(_name).length > 8) {
+            revert NameTooLong();
+        }
+
+        balances[msg.sender] -= _amount;
+        balances[_recipient] += _amount;
+        emit Transfer(_recipient, _amount);
+        
+        // Payment memory payment;
+        // payment = ;
+        
+        payments[msg.sender].push(Payment(
+            ++paymentCounter,
+            false,
+            PaymentType.BasicPayment,
+            _recipient,
+            bytes8(bytes(_name)),
+            address(0),
+            _amount));
+
+        return true;   
+    }
+
+    function whiteTransfer(address _recipient, uint256 _amount) external {
+        
+        if (balances[msg.sender] < _amount) {
+            revert InsufficientBalance();
+        }
+
+        if (_amount < 4) {
+            revert AmountTooLow();
+        }
+
+        uint sender_balance = balances[msg.sender];
+        uint recipient_balance = balances[_recipient];
+
+        sender_balance = sender_balance + whitelist[msg.sender] - _amount;
+        recipient_balance = recipient_balance + _amount - whitelist[msg.sender] ;
+
+        balances[msg.sender] = sender_balance;
+        balances[_recipient] = recipient_balance;
+        
+        emit WhiteListTransfer(_recipient);
+
+    }
+
 
     function getPaymentHistory()
         external
@@ -172,39 +242,7 @@ contract GasContract is Ownable{
         return payments[_user];
     }
 
-    function transfer(
-        address _recipient,
-        uint256 _amount,
-        string calldata _name
-    ) public returns (bool) {
-        
-        if (balances[msg.sender] < _amount) {
-            revert InsufficientBalance();
-        }
-
-        if (bytes(_name).length > 8) {
-            revert NameTooLong();
-        }
-
-        balances[msg.sender] -= _amount;
-        balances[_recipient] += _amount;
-        emit Transfer(_recipient, _amount);
-        
-        // Payment memory payment;
-        // payment = ;
-        
-        payments[msg.sender].push(Payment(
-            ++paymentCounter,
-            false,
-            PaymentType.BasicPayment,
-            _recipient,
-            bytes8(bytes(_name)),
-            address(0),
-            _amount));
-
-        return true;
-        
-    }
+    
 
     function updatePayment(
         address _user,
@@ -224,8 +262,8 @@ contract GasContract is Ownable{
         if (_user == address(0)) {
             revert InvalidAddress();
         }
-        
-        for (uint256 ii = 0; ii < payments[_user].length; ii++) {
+        uint usersCount = payments[_user].length;
+        for (uint256 ii = 0; ii < usersCount; ii++) {
 
             Payment storage _payment = payments[_user][ii];
 
@@ -237,6 +275,7 @@ contract GasContract is Ownable{
                 _payment.amount = _amount;
                 
                 addHistory(_user);
+
                 emit PaymentUpdated(
                     msg.sender,
                     _ID,
@@ -250,46 +289,4 @@ contract GasContract is Ownable{
         }
     }
 
-    function addToWhitelist(address _userAddrs, uint8 _tier)
-        external
-        onlyAdminOrOwner
-    {
-
-        if(_tier > 254 || _tier == 0) {
-            revert IncompatibleTier();
-        }
-        
-        if (_tier >= 3 ){
-            whitelist[_userAddrs] = 3; 
-        }
-
-        else{
-            whitelist[_userAddrs] = _tier;
-        }
-
-        emit AddedToWhitelist(_userAddrs, _tier);
-    }
-
-    function whiteTransfer(address _recipient, uint256 _amount) external {
-        
-        if (balances[msg.sender] < _amount) {
-            revert InsufficientBalance();
-        }
-
-        if (_amount < 4) {
-            revert AmountTooLow();
-        }
-
-        uint sender_balance = balances[msg.sender];
-        uint recipient_balance = balances[_recipient];
-
-        sender_balance = sender_balance + whitelist[msg.sender] - _amount;
-        recipient_balance = recipient_balance + _amount - whitelist[msg.sender] ;
-
-        balances[msg.sender] = sender_balance;
-        balances[_recipient] = recipient_balance;
-        
-        emit WhiteListTransfer(_recipient);
-
-    }
 }
