@@ -109,16 +109,16 @@ describe("Gas1", function () {
   //CAN BE adjusted to a level
   it("add users to whitelist and validate key users are added with correct tier", async function () {
     await addToWhitelist();
-    const proof = merkleTree1.getHexProof(keccak256(addr1.address))
-    expect(await gasContract.checkWhitelist(addr2.address, proof)).to.eq(0)
+    const proof = merkleTree.getHexProof(keccak256(addr2.address))
+    expect(await gasContract.checkWhitelist(addr2.address, proof)).to.eq(true)
     // console.log("KECCAK256 Address1",keccak256(addr1.address));
 
-    // let whitelistAddr1 = await gasContract.whitelist(addr1.address);
-    // expect(parseInt(whitelistAddr1)).to.equal(1);
-    // let whitelistAddr2 = await gasContract.whitelist(addr2.address);
-    // expect(parseInt(whitelistAddr2)).to.equal(2);
-    // let whitelistAddr3 = await gasContract.whitelist(addr3.address);
-    // expect(parseInt(whitelistAddr3)).to.equal(3);
+    let whitelistAddr1 = await gasContract.whitelist(addr1.address);
+    expect(parseInt(whitelistAddr1)).to.equal(1);
+    let whitelistAddr2 = await gasContract.whitelist(addr2.address);
+    expect(parseInt(whitelistAddr2)).to.equal(2);
+    let whitelistAddr3 = await gasContract.whitelist(addr3.address);
+    expect(parseInt(whitelistAddr3)).to.equal(3);
   });
   it("whitelist transfer works", async function () {
     await addToWhitelist();
@@ -136,15 +136,15 @@ describe("Gas1", function () {
     let sendValue3 = 50;
     const whiteTransferTx1 = await gasContract
       .connect(addr1)
-      .whiteTransfer(recipient1.address, sendValue1, merkleTree1.getHexProof(keccak256(addr1.address)));
+      .whiteTransfer(recipient1.address, sendValue1);
     await whiteTransferTx1.wait();
     const whiteTransferTx2 = await gasContract
       .connect(addr2)
-      .whiteTransfer(recipient2.address, sendValue2, merkleTree2.getHexProof(keccak256(addr2.address)));
+      .whiteTransfer(recipient2.address, sendValue2);
     await whiteTransferTx2.wait();
     const whiteTransferTx3 = await gasContract
       .connect(addr3)
-      .whiteTransfer(recipient3.address, sendValue3, merkleTree3.getHexProof(keccak256(addr3.address)));
+      .whiteTransfer(recipient3.address, sendValue3);
     await whiteTransferTx3.wait();
     let rec1Balance = await gasContract.balanceOf(recipient1.address);
     let rec2Balance = await gasContract.balanceOf(recipient2.address);
@@ -182,30 +182,24 @@ describe("Gas1", function () {
     }
     addrArray3.push(addr3.address);
 
-    merkleTree1 = new MerkleTree(
-      addrArray1,
+    addrArray4 = addrArray1.concat(addrArray2, addrArray3); 
+
+    tierArray1 = Array(addrArray1.length).fill(1);
+    tierArray2 = Array(addrArray2.length).fill(2);
+    tierArray3 = Array(addrArray3.length).fill(3);
+
+    tierArray4 = tierArray1.concat(tierArray2, tierArray3);
+
+    merkleTree = new MerkleTree(
+      addrArray4,
       keccak256,
       { hashLeaves: true, sortPairs: true }
     )
 
-    merkleTree2 = new MerkleTree(
-      addrArray2,
-      keccak256,
-      { hashLeaves: true, sortPairs: true }
-    )
+    const root = merkleTree.getHexRoot();
+    
 
-    merkleTree3 = new MerkleTree(
-      addrArray3,
-      keccak256,
-      { hashLeaves: true, sortPairs: true }
-    )
-
-    const root1 = merkleTree1.getHexRoot();
-    const root2 = merkleTree2.getHexRoot();
-    const root3 = merkleTree3.getHexRoot();
-
-
-    let tx0 = await gasContract.addToWhitelist(root1, root2, root3);
+    let tx0 = await gasContract.addToWhitelist(root, addrArray4, tierArray4);
     await tx0.wait();
     // addrArray1.forEach(async (element) => {
     //   let tx1 = await gasContract.addToWhitelist(element, 1);

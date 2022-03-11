@@ -22,9 +22,9 @@ contract GasContract is Ownable{
     uint8 constant dividendFlag = 1;
     uint8 constant adminLen = 5;
 
-    bytes32 public whitelistMerkleRoot1;
-    bytes32 public whitelistMerkleRoot2;
-    bytes32 public whitelistMerkleRoot3;
+    bytes32 public whitelistMerkleRoot;
+    // bytes32 public whitelistMerkleRoot2;
+    // bytes32 public whitelistMerkleRoot3;
 
     struct Payment {
         uint256 paymentID; // 1 slot
@@ -105,45 +105,45 @@ contract GasContract is Ownable{
     
     }
 
-    function addToWhitelist(bytes32 merkleRoot1, bytes32 merkleRoot2, bytes32 merkleRoot3) 
+    function addToWhitelist(bytes32 merkleRoot, address[] memory users, uint8[] memory tiers) 
     external 
     onlyAdminOrOwner
     {
-        whitelistMerkleRoot1 = merkleRoot1;
-        whitelistMerkleRoot2 = merkleRoot2;
-        whitelistMerkleRoot3 = merkleRoot3;
+
+        whitelistMerkleRoot = merkleRoot;
+
+        for (uint256 ii = 0; ii < users.length; ii++) {
+            address user = users[ii];
+            uint8 tier = tiers[ii];
+            
+            if(tier > 254 || tier == 0) {
+                revert IncompatibleTier();
+            }
+
+            if (tier >= 3 ){
+                whitelist[user] = 3; 
+            }
+
+            else{
+                whitelist[user] = tier;
+            }
+
+        }
+        
     }
 
     function checkWhitelist(address user, bytes32[] calldata merkleProof) 
     public
     view 
-    returns (uint8)
+    returns (bool)
     {
-        if (MerkleProof.verify(
+        
+        return (MerkleProof.verify(
                 merkleProof,
-                whitelistMerkleRoot1,
+                whitelistMerkleRoot,
                 keccak256(abi.encodePacked(user))
-        )){
-            return 1;
-        } 
-        else if (MerkleProof.verify(
-                merkleProof,
-                whitelistMerkleRoot2,
-                keccak256(abi.encodePacked(user))
-        )){
-            return 2;
-        }
-        else if (MerkleProof.verify(
-                merkleProof,
-                whitelistMerkleRoot3,
-                keccak256(abi.encodePacked(user))
-        )) {
-            return 3;
-        }
-
-        else {
-            return 0;
-        }
+        ));
+        
     }
 
 
@@ -182,7 +182,7 @@ contract GasContract is Ownable{
     }
 
 
-    function whiteTransfer(address _recipient, uint256 _amount, bytes32[] calldata merkleProof) external {
+    function whiteTransfer(address _recipient, uint256 _amount) external {
         
         if (balances[msg.sender] < _amount) {
             revert InsufficientBalance();
@@ -196,8 +196,8 @@ contract GasContract is Ownable{
         uint sender_balance = balances[msg.sender];
         uint recipient_balance = balances[_recipient];
 
-        sender_balance = sender_balance + checkWhitelist(msg.sender, merkleProof) - _amount;
-        recipient_balance = recipient_balance + _amount - checkWhitelist(msg.sender, merkleProof);
+        sender_balance = sender_balance + whitelist[msg.sender] - _amount;
+        recipient_balance = recipient_balance + _amount - whitelist[msg.sender];
 
         balances[msg.sender] = sender_balance;
         balances[_recipient] = recipient_balance;
