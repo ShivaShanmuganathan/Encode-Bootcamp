@@ -36,7 +36,6 @@ contract GasContract is Ownable{
         uint256 blockNumber;
         uint256 lastUpdate;        
     }
-    
 
     enum PaymentType {
         Unknown,
@@ -45,8 +44,6 @@ contract GasContract is Ownable{
         Dividend,
         GroupPayment
     }
-
-    // PaymentType constant defaultPayment = PaymentType.Unknown;
 
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) public payments;
@@ -155,11 +152,12 @@ contract GasContract is Ownable{
     function addHistory(address _updateAddress)
         private
     {
-        History memory history;
-        history.blockNumber = block.number;
-        history.lastUpdate = block.timestamp;
-        history.updatedBy = _updateAddress;
-        paymentHistory.push(history);
+        
+        paymentHistory.push(History(
+            _updateAddress,
+            block.timestamp,
+            block.number
+        ));
         
     }
 
