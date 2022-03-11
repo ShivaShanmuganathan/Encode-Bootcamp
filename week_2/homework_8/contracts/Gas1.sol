@@ -74,14 +74,11 @@ contract GasContract is Ownable{
 
     modifier onlyAdminOrOwner() {
 
-        if(checkForAdmin(msg.sender)) {
-            _;
-        }
-        else if(msg.sender == contractOwner) {
-            _;
+        if(admins[msg.sender] == false && (msg.sender != contractOwner)) {
+            revert Unauthorized();
         }
         else{
-            revert Unauthorized();
+            _;
         }
 
     }
@@ -125,9 +122,9 @@ contract GasContract is Ownable{
         return paymentHistory;
     }
 
-    function checkForAdmin(address _user) private view returns (bool) {
+    // function checkForAdmin(address _user) private view returns (bool) {
 
-        return admins[_user];
+        // return admins[_user];
         
         // for (uint256 ii = 0; ii < adminLen; ii++) {
         //     if (administrators[ii] == _user) {
@@ -136,7 +133,7 @@ contract GasContract is Ownable{
         // }
         // return false;
         
-    }
+    // }
 
     function balanceOf(address _user) external view returns (uint256) {
         return balances[_user];
