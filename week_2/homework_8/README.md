@@ -16,3 +16,6 @@ You **cannot** \* change the tests, and all the tests must pass.
 
 **Gas Cost After Optimization**
 ![Image](./gas_after_optimization.JPG)
+
+**Gas Cost Optimization - After Changing Admin Array To Admin Mapping**
+![Image](./gas_after_admin_optimization.JPG)
