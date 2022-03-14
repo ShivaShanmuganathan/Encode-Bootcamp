@@ -2,19 +2,10 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "hardhat/console.sol";
 
-contract GasContract is Ownable, EIP712{
-
-    address immutable contractOwner;
-    string private constant SIGNING_DOMAIN = "Lazy-Voucher";
-    string private constant SIGNATURE_VERSION = "1";
-    uint8 constant tradeFlag = 1;
-    uint8 constant basicFlag = 0;
-    uint8 constant dividendFlag = 1;
-    uint8 constant adminLen = 5;
+contract GasContract is Ownable{
     
     uint256 public immutable totalSupply; // cannot be updated
     uint256 public paymentCounter;
@@ -22,18 +13,19 @@ contract GasContract is Ownable, EIP712{
 
     // address[5] public administrators; 
     mapping (address => bool) public admins;
-    mapping(address => uint256) public balances;
-    mapping(address => Payment[]) public payments;
-    History[] public paymentHistory;
     // 20 bytes each
     // 5 slots
+    address immutable contractOwner;
 
-    struct Voucher {
-        uint8 tier;
-        address user;
-        bytes signature;
-    }
-    
+    uint8 constant tradeFlag = 1;
+    uint8 constant basicFlag = 0;
+    uint8 constant dividendFlag = 1;
+    uint8 constant adminLen = 5;
+
+    bytes32 public whitelistMerkleRoot;
+    // bytes32 public whitelistMerkleRoot2;
+    // bytes32 public whitelistMerkleRoot3;
+
     struct Payment {
         uint256 paymentID; // 1 slot
         bool adminUpdated; // 1 bit
@@ -58,8 +50,12 @@ contract GasContract is Ownable, EIP712{
         GroupPayment
     }
 
-     // when a payment was updated
-    
+    mapping(address => uint256) public balances;
+    mapping(address => Payment[]) public payments;
+    History[] public paymentHistory; // when a payment was updated
+    mapping(address => uint8) public whitelist;
+
+    event AddedToWhitelist(address userAddress, uint8 tier);
     event supplyChanged(address indexed, uint256 indexed);
     event Transfer(address recipient, uint256 amount);
     event PaymentUpdated(
@@ -77,23 +73,29 @@ contract GasContract is Ownable, EIP712{
     error IncompatibleTier();
     error IDError();
     error InvalidAddress();
-    error InvalidSignature();
 
-    constructor(address[] memory _admins, uint256 _totalSupply) 
-    EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {
+    modifier onlyAdminOrOwner() {
+
+        if(admins[msg.sender] == false && (msg.sender != contractOwner)) {
+            revert Unauthorized();
+        }
+        else{
+            _;
+        }
+
+    }
+
+    constructor(address[] memory _admins, uint256 _totalSupply) {
         
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
         
-        for (uint256 ii = 0; ii < adminLen; ++ii) 
-        {
+        for (uint256 ii = 0; ii < adminLen; ii++) {
             address _admin = _admins[ii];
-            if (_admin != address(0)) 
-            {
+            if (_admin != address(0)) {
                 admins[_admin] = true;
                 
-                if (_admin == contractOwner) 
-                {
+                if (_admin == contractOwner) {
                     balances[_admin] = _totalSupply;
                     emit supplyChanged(_admin, _totalSupply);
                 } 
@@ -102,6 +104,34 @@ contract GasContract is Ownable, EIP712{
         }
     
     }
+
+    function addToWhitelist(bytes32 merkleRoot) 
+    external 
+    onlyAdminOrOwner
+    {
+
+        whitelistMerkleRoot = merkleRoot;
+        
+    }
+
+    function checkWhitelist(string memory user, bytes32[] calldata merkleProof) 
+    public
+    view 
+    returns (bool)
+    {   
+        bytes32 leaf_node = bytes32(keccak256(abi.encodePacked(user)));
+        // console.log(user, "User Address");
+        // console.logBytes32(leaf_node);
+        
+        return (MerkleProof.verify(
+                merkleProof,
+                whitelistMerkleRoot,
+                leaf_node
+        ));
+        
+    }
+
+
 
     function transfer(
         address _recipient,
@@ -120,7 +150,10 @@ contract GasContract is Ownable, EIP712{
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
-                
+        
+        // Payment memory payment;
+        // payment = ;
+        
         payments[msg.sender].push(Payment(
             ++paymentCounter,
             false,
@@ -134,7 +167,7 @@ contract GasContract is Ownable, EIP712{
     }
 
 
-    function whiteTransfer(address _recipient, uint256 _amount, Voucher calldata _voucher) external {
+    function whiteTransfer(address _recipient, uint256 _amount) external {
         
         if (balances[msg.sender] < _amount) {
             revert InsufficientBalance();
@@ -143,80 +176,19 @@ contract GasContract is Ownable, EIP712{
         if (_amount < 4) {
             revert AmountTooLow();
         }
-
-        address signer = _verify(_voucher);
-
-        if (signer != contractOwner) {
-            revert InvalidSignature();
-        }
-
-        if(msg.sender != _voucher.user){
-            revert InvalidAddress();
-        }
         
-        uint8 _tier = _voucher.tier;
 
-        if(_tier > 254 || _tier == 0) {
-            revert IncompatibleTier();
-        }
-
-        if (_tier > 3){
-            _tier = 3;
-        }
-        
         uint sender_balance = balances[msg.sender];
         uint recipient_balance = balances[_recipient];
 
-        sender_balance = sender_balance + _tier - _amount;
-        recipient_balance = recipient_balance + _amount - _tier;
+        sender_balance = sender_balance + whitelist[msg.sender] - _amount;
+        recipient_balance = recipient_balance + _amount - whitelist[msg.sender];
 
         balances[msg.sender] = sender_balance;
         balances[_recipient] = recipient_balance;
         
         emit WhiteListTransfer(_recipient);
 
-    }
-
-    function checkWhitelist(Voucher calldata _voucher) external view returns(uint256) {
-
-        address signer = _verify(_voucher);
-
-        if (signer != contractOwner) {
-            revert InvalidSignature();
-        }
-
-        if(msg.sender != _voucher.user){
-            revert InvalidAddress();
-        }
-
-        return _voucher.tier;
-
-    }
-
-    function getChainID() external view returns (uint256) {
-        uint256 id;
-        assembly {
-            id := chainid()
-        }
-        return id;
-    }
-
-
-
-    /// @notice Verifies the signature for a given Voucher, returning the address of the signer.
-    function _verify(Voucher calldata voucher) internal view returns (address) {
-        bytes32 digest = _hash(voucher);
-        return ECDSA.recover(digest, voucher.signature);
-    }
-
-    /// @notice Returns a hash of the given Voucher, prepared using EIP712 typed data hashing rules.
-    /// @param voucher A Voucher to hash.
-    function _hash(Voucher calldata voucher) internal view returns (bytes32) {
-        return _hashTypedDataV4(keccak256(abi.encode(
-        keccak256("Voucher(uint8 tier,address user)"),
-        voucher.tier,
-        voucher.user
-        )));
     }
 
 
@@ -268,17 +240,14 @@ contract GasContract is Ownable, EIP712{
         return payments[_user];
     }
 
+    
 
     function updatePayment(
         address _user,
         uint256 _ID,
         uint256 _amount,
         PaymentType _type
-    ) external {
-
-        if(admins[msg.sender] == false && (msg.sender != contractOwner)) {
-            revert Unauthorized();
-        }
+    ) external onlyAdminOrOwner {
         
         if (_ID == 0) {
             revert IDError();
@@ -291,10 +260,8 @@ contract GasContract is Ownable, EIP712{
         if (_user == address(0)) {
             revert InvalidAddress();
         }
-
-        
-        
-        for (uint256 ii = 0; ii < payments[_user].length; ++ii) {
+        uint usersCount = payments[_user].length;
+        for (uint256 ii = 0; ii < usersCount; ii++) {
 
             Payment storage _payment = payments[_user][ii];
 
