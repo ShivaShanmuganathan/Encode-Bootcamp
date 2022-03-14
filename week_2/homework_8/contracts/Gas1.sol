@@ -3,9 +3,11 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "hardhat/console.sol";
 
-contract GasContract is Ownable{
+contract GasContract is Ownable, EIP712{
     
     uint256 public immutable totalSupply; // cannot be updated
     uint256 public paymentCounter;
@@ -22,9 +24,11 @@ contract GasContract is Ownable{
     uint8 constant dividendFlag = 1;
     uint8 constant adminLen = 5;
 
-    bytes32 public whitelistMerkleRoot;
+    // bytes32 public whitelistMerkleRoot;
     // bytes32 public whitelistMerkleRoot2;
     // bytes32 public whitelistMerkleRoot3;
+    string private constant SIGNING_DOMAIN = "Lazy-Voucher";
+    string private constant SIGNATURE_VERSION = "1";
 
     struct Payment {
         uint256 paymentID; // 1 slot
@@ -42,6 +46,17 @@ contract GasContract is Ownable{
         uint256 lastUpdate;        
     }
 
+    struct Voucher {
+        /// @notice The tier of the address to be redeemed.
+        uint256 tier;
+
+        /// @notice The whitelisted user address.
+        address user;
+
+        /// @notice the EIP-712 signature of all other fields in the Voucher struct. For a voucher to be valid, it must be signed by an account with the MINTER_ROLE.
+        bytes signature;
+    }
+
     enum PaymentType {
         Unknown,
         BasicPayment,
@@ -53,9 +68,9 @@ contract GasContract is Ownable{
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) public payments;
     History[] public paymentHistory; // when a payment was updated
-    mapping(address => uint8) public whitelist;
+    // mapping(address => uint8) public whitelist;
 
-    event AddedToWhitelist(address userAddress, uint8 tier);
+    // event AddedToWhitelist(address userAddress, uint8 tier);
     event supplyChanged(address indexed, uint256 indexed);
     event Transfer(address recipient, uint256 amount);
     event PaymentUpdated(
@@ -73,6 +88,7 @@ contract GasContract is Ownable{
     error IncompatibleTier();
     error IDError();
     error InvalidAddress();
+    error InvalidSignature();
 
     modifier onlyAdminOrOwner() {
 
@@ -85,12 +101,13 @@ contract GasContract is Ownable{
 
     }
 
-    constructor(address[] memory _admins, uint256 _totalSupply) {
+    constructor(address[] memory _admins, uint256 _totalSupply) 
+    EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {
         
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
         
-        for (uint256 ii = 0; ii < adminLen; ii++) {
+        for (uint256 ii = 0; ii < adminLen; ++ii) {
             address _admin = _admins[ii];
             if (_admin != address(0)) {
                 admins[_admin] = true;
@@ -104,49 +121,6 @@ contract GasContract is Ownable{
         }
     
     }
-
-    function addToWhitelist(bytes32 merkleRoot, address[] memory users, uint8[] memory tiers) 
-    external 
-    onlyAdminOrOwner
-    {
-
-        whitelistMerkleRoot = merkleRoot;
-
-        for (uint256 ii = 0; ii < users.length; ii++) {
-            address user = users[ii];
-            uint8 tier = tiers[ii];
-            
-            if(tier > 254 || tier == 0) {
-                revert IncompatibleTier();
-            }
-
-            if (tier >= 3 ){
-                whitelist[user] = 3; 
-            }
-
-            else{
-                whitelist[user] = tier;
-            }
-
-        }
-        
-    }
-
-    function checkWhitelist(address user, bytes32[] calldata merkleProof) 
-    public
-    view 
-    returns (bool)
-    {
-        
-        return (MerkleProof.verify(
-                merkleProof,
-                whitelistMerkleRoot,
-                keccak256(abi.encodePacked(user))
-        ));
-        
-    }
-
-
 
     function transfer(
         address _recipient,
@@ -182,7 +156,7 @@ contract GasContract is Ownable{
     }
 
 
-    function whiteTransfer(address _recipient, uint256 _amount) external {
+    function whiteTransfer(address _recipient, uint256 _amount, Voucher calldata _voucher) external {
         
         if (balances[msg.sender] < _amount) {
             revert InsufficientBalance();
@@ -191,19 +165,81 @@ contract GasContract is Ownable{
         if (_amount < 4) {
             revert AmountTooLow();
         }
-        
 
+        address signer = _verify(_voucher);
+
+        if (signer != contractOwner) {
+            revert InvalidSignature();
+        }
+
+        if(msg.sender != _voucher.user){
+            revert InvalidAddress();
+        }
+        
+        uint256 _tier = _voucher.tier;
+
+        if(_tier > 254 || _tier == 0) {
+            revert IncompatibleTier();
+        }
+
+        if (_tier > 3){
+            _tier = 3;
+        }
+        
         uint sender_balance = balances[msg.sender];
         uint recipient_balance = balances[_recipient];
 
-        sender_balance = sender_balance + whitelist[msg.sender] - _amount;
-        recipient_balance = recipient_balance + _amount - whitelist[msg.sender];
+        sender_balance = sender_balance + _tier - _amount;
+        recipient_balance = recipient_balance + _amount - _tier;
 
         balances[msg.sender] = sender_balance;
         balances[_recipient] = recipient_balance;
         
         emit WhiteListTransfer(_recipient);
 
+    }
+
+    function checkWhitelist(Voucher calldata _voucher) external view returns(uint256) {
+
+        address signer = _verify(_voucher);
+
+        if (signer != contractOwner) {
+            revert InvalidSignature();
+        }
+
+        if(msg.sender != _voucher.user){
+            revert InvalidAddress();
+        }
+
+
+        return _voucher.tier;
+
+    }
+
+    function getChainID() external view returns (uint256) {
+        uint256 id;
+        assembly {
+            id := chainid()
+        }
+        return id;
+    }
+
+
+
+    /// @notice Verifies the signature for a given Voucher, returning the address of the signer.
+    function _verify(Voucher calldata voucher) internal view returns (address) {
+        bytes32 digest = _hash(voucher);
+        return ECDSA.recover(digest, voucher.signature);
+    }
+
+    /// @notice Returns a hash of the given Voucher, prepared using EIP712 typed data hashing rules.
+    /// @param voucher A Voucher to hash.
+    function _hash(Voucher calldata voucher) internal view returns (bytes32) {
+        return _hashTypedDataV4(keccak256(abi.encode(
+        keccak256("Voucher(uint256 tier,address user)"),
+        voucher.tier,
+        voucher.user
+        )));
     }
 
 
