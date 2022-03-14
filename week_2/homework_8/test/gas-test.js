@@ -17,9 +17,7 @@ async function deploy() {
     owner.address,
   ];
   const contract = await factory.deploy(admins, 10000)
-  // await gasContract.deployed();
-  // the redeemerContract is an instance of the contract that's wired up to the redeemer's signing key
-
+  
   return {
     contract
   }
@@ -177,7 +175,6 @@ describe("Gas1", function () {
     let rec1Balance = await contract.balanceOf(recipient1.address);
     let rec2Balance = await contract.balanceOf(recipient2.address);
     let rec3Balance = await contract.balanceOf(recipient3.address);
-    console.log("rec1 Balance",rec1Balance);
     expect(sendValue1 - 1).to.equal(rec1Balance);
     expect(sendValue2 - 2).to.equal(rec2Balance);
     expect(sendValue3 - 3).to.equal(rec3Balance);
@@ -224,47 +221,5 @@ describe("Gas1", function () {
     voucher3 = await lazyVoucher.createVoucher(3, addr3.address)    
     addrArray3.push(addr3.address);
 
-    // addrArray4 = addrArray1.concat(addrArray2, addrArray3); 
-
-    // tierArray1 = Array(addrArray1.length).fill(1);
-    // tierArray2 = Array(addrArray2.length).fill(2);
-    // tierArray3 = Array(addrArray3.length).fill(3);
-
-    // tierArray4 = tierArray1.concat(tierArray2, tierArray3);
-
-    // merkleTree = new MerkleTree(
-    //   addrArray4,
-    //   keccak256,
-    //   { hashLeaves: true, sortPairs: true }
-    // )
-
-    // const root = merkleTree.getHexRoot();
-    
-
-    // let tx0 = await gasContract.addToWhitelist(root, addrArray4, tierArray4);
-    // await tx0.wait();
-    // addrArray1.forEach(async (element) => {
-    //   let tx1 = await gasContract.addToWhitelist(element, 1);
-    //   await tx1.wait();
-    // });
-
-    // for (let i = 0; i < 19; i++) {
-    //   let wallet = ethers.Wallet.createRandom();
-    //   addrArray2.push(wallet.address);
-    // }
-    // addrArray2.push(addr2.address);
-    // addrArray2.forEach(async (element) => {
-    //   let tx2 = await gasContract.addToWhitelist(element, 2);
-    //   await tx2.wait();
-    // });
-    // for (let i = 0; i < 29; i++) {
-    //   let wallet = ethers.Wallet.createRandom();
-    //   addrArray3.push(wallet.address);
-    // }
-    // addrArray3.push(addr3.address);
-    // addrArray3.forEach(async (element) => {
-    //   let tx3 = await gasContract.addToWhitelist(element, 3);
-    //   await tx3.wait();
-    // });
   }
 });

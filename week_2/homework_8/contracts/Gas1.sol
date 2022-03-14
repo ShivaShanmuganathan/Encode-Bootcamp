@@ -2,12 +2,19 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "hardhat/console.sol";
 
 contract GasContract is Ownable, EIP712{
+
+    address immutable contractOwner;
+    string private constant SIGNING_DOMAIN = "Lazy-Voucher";
+    string private constant SIGNATURE_VERSION = "1";
+    uint8 constant tradeFlag = 1;
+    uint8 constant basicFlag = 0;
+    uint8 constant dividendFlag = 1;
+    uint8 constant adminLen = 5;
     
     uint256 public immutable totalSupply; // cannot be updated
     uint256 public paymentCounter;
@@ -15,21 +22,18 @@ contract GasContract is Ownable, EIP712{
 
     // address[5] public administrators; 
     mapping (address => bool) public admins;
+    mapping(address => uint256) public balances;
+    mapping(address => Payment[]) public payments;
+    History[] public paymentHistory;
     // 20 bytes each
     // 5 slots
-    address immutable contractOwner;
 
-    uint8 constant tradeFlag = 1;
-    uint8 constant basicFlag = 0;
-    uint8 constant dividendFlag = 1;
-    uint8 constant adminLen = 5;
-
-    // bytes32 public whitelistMerkleRoot;
-    // bytes32 public whitelistMerkleRoot2;
-    // bytes32 public whitelistMerkleRoot3;
-    string private constant SIGNING_DOMAIN = "Lazy-Voucher";
-    string private constant SIGNATURE_VERSION = "1";
-
+    struct Voucher {
+        uint8 tier;
+        address user;
+        bytes signature;
+    }
+    
     struct Payment {
         uint256 paymentID; // 1 slot
         bool adminUpdated; // 1 bit
@@ -46,17 +50,6 @@ contract GasContract is Ownable, EIP712{
         uint256 lastUpdate;        
     }
 
-    struct Voucher {
-        /// @notice The tier of the address to be redeemed.
-        uint256 tier;
-
-        /// @notice The whitelisted user address.
-        address user;
-
-        /// @notice the EIP-712 signature of all other fields in the Voucher struct. For a voucher to be valid, it must be signed by an account with the MINTER_ROLE.
-        bytes signature;
-    }
-
     enum PaymentType {
         Unknown,
         BasicPayment,
@@ -65,12 +58,8 @@ contract GasContract is Ownable, EIP712{
         GroupPayment
     }
 
-    mapping(address => uint256) public balances;
-    mapping(address => Payment[]) public payments;
-    History[] public paymentHistory; // when a payment was updated
-    // mapping(address => uint8) public whitelist;
-
-    // event AddedToWhitelist(address userAddress, uint8 tier);
+     // when a payment was updated
+    
     event supplyChanged(address indexed, uint256 indexed);
     event Transfer(address recipient, uint256 amount);
     event PaymentUpdated(
@@ -90,29 +79,21 @@ contract GasContract is Ownable, EIP712{
     error InvalidAddress();
     error InvalidSignature();
 
-    modifier onlyAdminOrOwner() {
-
-        if(admins[msg.sender] == false && (msg.sender != contractOwner)) {
-            revert Unauthorized();
-        }
-        else{
-            _;
-        }
-
-    }
-
     constructor(address[] memory _admins, uint256 _totalSupply) 
     EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {
         
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
         
-        for (uint256 ii = 0; ii < adminLen; ++ii) {
+        for (uint256 ii = 0; ii < adminLen; ++ii) 
+        {
             address _admin = _admins[ii];
-            if (_admin != address(0)) {
+            if (_admin != address(0)) 
+            {
                 admins[_admin] = true;
                 
-                if (_admin == contractOwner) {
+                if (_admin == contractOwner) 
+                {
                     balances[_admin] = _totalSupply;
                     emit supplyChanged(_admin, _totalSupply);
                 } 
@@ -139,10 +120,7 @@ contract GasContract is Ownable, EIP712{
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
-        
-        // Payment memory payment;
-        // payment = ;
-        
+                
         payments[msg.sender].push(Payment(
             ++paymentCounter,
             false,
@@ -176,7 +154,7 @@ contract GasContract is Ownable, EIP712{
             revert InvalidAddress();
         }
         
-        uint256 _tier = _voucher.tier;
+        uint8 _tier = _voucher.tier;
 
         if(_tier > 254 || _tier == 0) {
             revert IncompatibleTier();
@@ -211,7 +189,6 @@ contract GasContract is Ownable, EIP712{
             revert InvalidAddress();
         }
 
-
         return _voucher.tier;
 
     }
@@ -236,7 +213,7 @@ contract GasContract is Ownable, EIP712{
     /// @param voucher A Voucher to hash.
     function _hash(Voucher calldata voucher) internal view returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(
-        keccak256("Voucher(uint256 tier,address user)"),
+        keccak256("Voucher(uint8 tier,address user)"),
         voucher.tier,
         voucher.user
         )));
@@ -291,14 +268,17 @@ contract GasContract is Ownable, EIP712{
         return payments[_user];
     }
 
-    
 
     function updatePayment(
         address _user,
         uint256 _ID,
         uint256 _amount,
         PaymentType _type
-    ) external onlyAdminOrOwner {
+    ) external {
+
+        if(admins[msg.sender] == false && (msg.sender != contractOwner)) {
+            revert Unauthorized();
+        }
         
         if (_ID == 0) {
             revert IDError();
@@ -311,8 +291,10 @@ contract GasContract is Ownable, EIP712{
         if (_user == address(0)) {
             revert InvalidAddress();
         }
-        uint usersCount = payments[_user].length;
-        for (uint256 ii = 0; ii < usersCount; ii++) {
+
+        
+        
+        for (uint256 ii = 0; ii < payments[_user].length; ++ii) {
 
             Payment storage _payment = payments[_user][ii];
 

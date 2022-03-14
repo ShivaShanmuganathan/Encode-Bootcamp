@@ -37,7 +37,7 @@ class LazyVoucher {
     const domain = await this._signingDomain()
     const types = {
       Voucher: [
-        {name: "tier", type: "uint256"},
+        {name: "tier", type: "uint8"},
         {name: "user", type: "address"},
       ]
     }
