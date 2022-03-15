@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 
 contract GasContract is Ownable{
@@ -119,14 +120,28 @@ contract GasContract is Ownable{
     view 
     returns (bool)
     {   
-        bytes32 leaf_node = bytes32(keccak256(abi.encodePacked(user)));
-        // console.log(user, "User Address");
-        // console.logBytes32(leaf_node);
+        console.log("Address");
+        console.log((user));
         
+        bytes32  leafNode = bytes32(keccak256(abi.encodePacked(user)));
+        // bytes memory strBytes = bytes(user);
+        // bytes memory result = new bytes(42);
+        // bytes1 tier = strBytes[43];
+        
+        // console.log("tier");
+        // console.log(uint8(string(tier)));
+
+        // for(uint i = 0; i < 42; i++) {
+        //     result[i] = strBytes[i];
+        // }
+        // console.log("String");
+        // console.log(string(result));
+        
+                
         return (MerkleProof.verify(
                 merkleProof,
                 whitelistMerkleRoot,
-                leaf_node
+                leafNode
         ));
         
     }
@@ -167,7 +182,7 @@ contract GasContract is Ownable{
     }
 
 
-    function whiteTransfer(address _recipient, uint256 _amount) external {
+    function whiteTransfer(address _recipient, uint256 _amount, uint256 _tier, bytes32[] calldata _merkleProof) external {
         
         if (balances[msg.sender] < _amount) {
             revert InsufficientBalance();
@@ -176,7 +191,9 @@ contract GasContract is Ownable{
         if (_amount < 4) {
             revert AmountTooLow();
         }
-        
+        string memory new_str = string(abi.encodePacked(abi.encodePacked(msg.sender), Strings.toString(_tier)));
+        console.log("Address String", new_str);
+        require(checkWhitelist(new_str, _merkleProof), "not whitelisted");
 
         uint sender_balance = balances[msg.sender];
         uint recipient_balance = balances[_recipient];
