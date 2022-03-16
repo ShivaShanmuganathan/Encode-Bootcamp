@@ -3,7 +3,6 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 
 contract GasContract is Ownable{
@@ -110,12 +109,13 @@ contract GasContract is Ownable{
     external 
     onlyAdminOrOwner
     {
+        
 
         whitelistMerkleRoot = merkleRoot;
         
     }
 
-    function checkWhitelist(string memory user, bytes32[] calldata merkleProof) 
+    function checkWhitelist(address user, uint tier, bytes32[] calldata merkleProof) 
     public
     view 
     returns (bool)
@@ -123,19 +123,12 @@ contract GasContract is Ownable{
         console.log("Address");
         console.log((user));
         
-        bytes32  leafNode = bytes32(keccak256(abi.encodePacked(user)));
-        // bytes memory strBytes = bytes(user);
-        // bytes memory result = new bytes(42);
-        // bytes1 tier = strBytes[43];
-        
-        // console.log("tier");
-        // console.log(uint8(string(tier)));
-
-        // for(uint i = 0; i < 42; i++) {
-        //     result[i] = strBytes[i];
-        // }
-        // console.log("String");
-        // console.log(string(result));
+        // bytes32  leafNode = bytes32(keccak256(abi.encodePacked(user)));
+        bytes32  leafNode = bytes32(keccak256(abi.encodePacked(user, tier)));
+        console.log("Packed Vars");
+        console.logBytes(abi.encodePacked(user, tier));
+        console.log("leafNode");
+        console.logBytes32(leafNode);
         
                 
         return (MerkleProof.verify(
@@ -191,15 +184,16 @@ contract GasContract is Ownable{
         if (_amount < 4) {
             revert AmountTooLow();
         }
-        string memory new_str = string(abi.encodePacked(abi.encodePacked(msg.sender), Strings.toString(_tier)));
-        console.log("Address String", new_str);
-        require(checkWhitelist(new_str, _merkleProof), "not whitelisted");
+        // string memory new_str = string(abi.encodePacked(abi.encodePacked(msg.sender), Strings.toString(_tier)));
+        // string memory new_str = string(abi.encodePacked(msg.sender));
+        // console.log("Address String", new_str);
+        require(checkWhitelist(msg.sender, _tier,_merkleProof), "not whitelisted");
 
         uint sender_balance = balances[msg.sender];
         uint recipient_balance = balances[_recipient];
 
-        sender_balance = sender_balance + whitelist[msg.sender] - _amount;
-        recipient_balance = recipient_balance + _amount - whitelist[msg.sender];
+        sender_balance = sender_balance + _tier - _amount;
+        recipient_balance = recipient_balance + _amount - _tier;
 
         balances[msg.sender] = sender_balance;
         balances[_recipient] = recipient_balance;
