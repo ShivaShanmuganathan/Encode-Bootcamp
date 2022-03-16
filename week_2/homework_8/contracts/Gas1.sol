@@ -6,40 +6,44 @@ import "hardhat/console.sol";
 
 contract GasContract{
     
-    uint256 public immutable totalSupply; // cannot be updated
-    uint256 public paymentCounter;
+    uint16 public immutable totalSupply; // cannot be updated
+    uint16 private paymentCounter;
+    address immutable contractOwner;
+    uint8 constant adminLen = 5;
+    bytes32 public whitelistMerkleRoot;
+    mapping (address => bool) public admins;
     // 2 slots
 
     // address[5] public administrators; 
-    mapping (address => bool) public admins;
+    
     // 20 bytes each
     // 5 slots
-    address immutable contractOwner;
+    
 
-    uint8 constant tradeFlag = 1;
-    uint8 constant basicFlag = 0;
-    uint8 constant dividendFlag = 1;
-    uint8 constant adminLen = 5;
+    // uint8 constant tradeFlag = 1;
+    // uint8 constant basicFlag = 0;
+    // uint8 constant dividendFlag = 1;
+    
 
-    bytes32 public whitelistMerkleRoot;
+    
     // bytes32 public whitelistMerkleRoot2;
     // bytes32 public whitelistMerkleRoot3;
 
     struct Payment {
-        uint256 paymentID; // 1 slot
-        bool adminUpdated; // 1 bit
-        PaymentType paymentType; 
-        address recipient; // 20 bytes 
-        bytes8 recipientName; // max 8 characters
-        address admin; // administrators address
         uint256 amount; // 1 slot
+        uint256 paymentID; // 1 slot
+        bytes8 recipientName; // max 8 characters
+        PaymentType paymentType; 
+        // bool adminUpdated; // 1 bit
+        // address recipient; // 20 bytes 
+        // address admin; // administrators address
     }
 
-    struct History {
-        address updatedBy;
-        uint256 blockNumber;
-        uint256 lastUpdate;        
-    }
+    // struct History {
+    //     address updatedBy;
+    //     uint256 blockNumber;
+    //     uint256 lastUpdate;        
+    // }
 
     enum PaymentType {
         Unknown,
@@ -49,20 +53,20 @@ contract GasContract{
         GroupPayment
     }
 
-    mapping(address => uint256) public balances;
+    mapping(address => uint256) private balances;
     mapping(address => Payment[]) public payments;
-    History[] public paymentHistory; // when a payment was updated
-    mapping(address => uint8) public whitelist;
+    // History[] public paymentHistory; 
+    // mapping(address => uint8) private whitelist;
 
     event AddedToWhitelist(address userAddress, uint8 tier);
     event supplyChanged(address indexed, uint256 indexed);
     event Transfer(address recipient, uint256 amount);
-    event PaymentUpdated(
-        address admin,
-        uint256 ID,
-        uint256 amount,
-        bytes8 recipient
-    );
+    // event PaymentUpdated(
+    //     address user,
+    //     uint256 ID,
+    //     uint256 amount,
+    //     bytes8 recipient
+    // );
     event WhiteListTransfer(address indexed);
 
     error Unauthorized();
@@ -84,12 +88,12 @@ contract GasContract{
 
     // }
 
-    constructor(address[] memory _admins, uint256 _totalSupply) {
+    constructor(address[] memory _admins, uint16 _totalSupply) {
         
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
         
-        for (uint256 ii = 0; ii < adminLen; ii++) {
+        for (uint8 ii = 0; ii < adminLen; ii++) {
             address _admin = _admins[ii];
             if (_admin != address(0)) {
                 admins[_admin] = true;
@@ -116,6 +120,10 @@ contract GasContract{
         
         require(checkWhitelist(msg.sender, _tier,_merkleProof), "not whitelisted");
 
+        if(_tier > 3){
+            _tier =3;
+        }
+
         uint sender_balance = balances[msg.sender];
         uint recipient_balance = balances[_recipient];
 
@@ -141,7 +149,7 @@ contract GasContract{
         
     }
 
-    function checkWhitelist(address user, uint tier, bytes32[] calldata merkleProof) 
+    function checkWhitelist(address user, uint256 tier, bytes32[] calldata merkleProof) 
     public
     view 
     returns (bool)
@@ -183,20 +191,21 @@ contract GasContract{
 
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        emit Transfer(_recipient, _amount);
+        
         
         // Payment memory payment;
         // payment = ;
         
         payments[msg.sender].push(Payment(
-            ++paymentCounter,
-            false,
-            PaymentType.BasicPayment,
-            _recipient,
+            _amount,
+            paymentCounter+1,
             bytes8(bytes(_name)),
-            address(0),
-            _amount));
-
+            PaymentType.BasicPayment));
+            // _recipient,
+            
+            // address(0),
+            // _amount));
+        emit Transfer(_recipient, _amount);
         return true;   
     }
 
@@ -204,13 +213,13 @@ contract GasContract{
     
 
 
-    function getPaymentHistory()
-        external
-        view
-        returns (History[] memory paymentHistory_)
-    {
-        return paymentHistory;
-    }
+    // function getPaymentHistory()
+    //     external
+    //     view
+    //     returns (History[] memory paymentHistory_)
+    // {
+    //     return paymentHistory;
+    // }
 
     function balanceOf(address _user) external view returns (uint256) {
         return balances[_user];
@@ -218,28 +227,29 @@ contract GasContract{
 
     function getTradingMode() external pure returns (bool) {
         
-        if (tradeFlag == 1 || dividendFlag == 1) {
+        // if (tradeFlag == 1 || dividendFlag == 1) {
             
-            return true;
-        } else {
+        //     return true;
+        // } else {
 
-            return false;
-        }
+        //     return false;
+        // }
+        return true;
 
     }
 
     // assuming addHistory is an internal function, since it changes state and is called by updatePayment
-    function addHistory(address _updateAddress)
-        private
-    {
+    // function addHistory(address _updateAddress)
+    //     private
+    // {
         
-        paymentHistory.push(History(
-            _updateAddress,
-            block.timestamp,
-            block.number
-        ));
+    //     paymentHistory.push(History(
+    //         _updateAddress,
+    //         block.timestamp,
+    //         block.number
+    //     ));
         
-    }
+    // }
 
     function getPayments(address _user)
         external
@@ -283,21 +293,24 @@ contract GasContract{
 
             if (_payment.paymentID == _ID) {
                 
-                _payment.adminUpdated = true;
-                _payment.paymentType = _type;
-                _payment.admin = _user;
+                // _payment.adminUpdated = true;
                 _payment.amount = _amount;
+                _payment.paymentType = _type;
+                break;
+                // _payment.admin = _user;
                 
-                addHistory(_user);
+                
+                // addHistory(_user);
 
-                emit PaymentUpdated(
-                    msg.sender,
-                    _ID,
-                    _amount,
-                    _payment.recipientName
-                );
+                // emit PaymentUpdated(
+                //     msg.sender,
+                //     _ID,
+                //     _amount,
+                //     _payment.recipientName
+                // );
 
-                payments[_user][ii] = _payment;
+                // payments[_user][ii] = _payment;
+                
             }
 
         }
