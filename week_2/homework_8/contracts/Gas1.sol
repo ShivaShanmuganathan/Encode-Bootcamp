@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "hardhat/console.sol";
 
-contract GasContract is Ownable{
+contract GasContract{
     
     uint256 public immutable totalSupply; // cannot be updated
     uint256 public paymentCounter;
@@ -74,16 +73,16 @@ contract GasContract is Ownable{
     error IDError();
     error InvalidAddress();
 
-    modifier onlyAdminOrOwner() {
+    // modifier onlyAdminOrOwner() {
 
-        if(admins[msg.sender] == false && (msg.sender != contractOwner)) {
-            revert Unauthorized();
-        }
-        else{
-            _;
-        }
+    //     if(admins[msg.sender] == false && (msg.sender != contractOwner)) {
+    //         revert Unauthorized();
+    //     }
+    //     else{
+    //         _;
+    //     }
 
-    }
+    // }
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
         
@@ -105,11 +104,38 @@ contract GasContract is Ownable{
     
     }
 
+    function whiteTransfer(address _recipient, uint256 _amount, uint256 _tier, bytes32[] calldata _merkleProof) external {
+        
+        if (balances[msg.sender] < _amount) {
+            revert InsufficientBalance();
+        }
+
+        if (_amount < 4) {
+            revert AmountTooLow();
+        }
+        
+        require(checkWhitelist(msg.sender, _tier,_merkleProof), "not whitelisted");
+
+        uint sender_balance = balances[msg.sender];
+        uint recipient_balance = balances[_recipient];
+
+        sender_balance = sender_balance + _tier - _amount;
+        recipient_balance = recipient_balance + _amount - _tier;
+
+        balances[msg.sender] = sender_balance;
+        balances[_recipient] = recipient_balance;
+        
+        emit WhiteListTransfer(_recipient);
+
+    }
+
     function addToWhitelist(bytes32 merkleRoot) 
     external 
-    onlyAdminOrOwner
+    
     {
-        
+        if(admins[msg.sender] == false && (msg.sender != contractOwner)) {
+            revert Unauthorized();
+        }
 
         whitelistMerkleRoot = merkleRoot;
         
@@ -175,32 +201,7 @@ contract GasContract is Ownable{
     }
 
 
-    function whiteTransfer(address _recipient, uint256 _amount, uint256 _tier, bytes32[] calldata _merkleProof) external {
-        
-        if (balances[msg.sender] < _amount) {
-            revert InsufficientBalance();
-        }
-
-        if (_amount < 4) {
-            revert AmountTooLow();
-        }
-        // string memory new_str = string(abi.encodePacked(abi.encodePacked(msg.sender), Strings.toString(_tier)));
-        // string memory new_str = string(abi.encodePacked(msg.sender));
-        // console.log("Address String", new_str);
-        require(checkWhitelist(msg.sender, _tier,_merkleProof), "not whitelisted");
-
-        uint sender_balance = balances[msg.sender];
-        uint recipient_balance = balances[_recipient];
-
-        sender_balance = sender_balance + _tier - _amount;
-        recipient_balance = recipient_balance + _amount - _tier;
-
-        balances[msg.sender] = sender_balance;
-        balances[_recipient] = recipient_balance;
-        
-        emit WhiteListTransfer(_recipient);
-
-    }
+    
 
 
     function getPaymentHistory()
@@ -258,7 +259,11 @@ contract GasContract is Ownable{
         uint256 _ID,
         uint256 _amount,
         PaymentType _type
-    ) external onlyAdminOrOwner {
+    ) external {
+
+        if(admins[msg.sender] == false && (msg.sender != contractOwner)) {
+            revert Unauthorized();
+        }
         
         if (_ID == 0) {
             revert IDError();
