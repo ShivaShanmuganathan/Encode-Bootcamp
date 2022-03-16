@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "hardhat/console.sol";
 
-contract GasContract is Ownable, EIP712{
+contract GasContract is EIP712{
 
     address immutable contractOwner;
     string private constant SIGNING_DOMAIN = "Lazy-Voucher";
@@ -20,7 +19,7 @@ contract GasContract is Ownable, EIP712{
     uint256 public paymentCounter;
     // 2 slots
 
-    // address[5] public administrators; 
+    
     mapping (address => bool) public admins;
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) public payments;
