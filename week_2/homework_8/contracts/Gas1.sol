@@ -7,27 +7,12 @@ import "hardhat/console.sol";
 contract GasContract{
     
     uint16 public immutable totalSupply; // cannot be updated
-    uint16 private paymentCounter;
+    uint16 private paymentCounter; 
     address immutable contractOwner;
     uint8 constant adminLen = 5;
     bytes32 public whitelistMerkleRoot;
     mapping (address => bool) public admins;
-    // 2 slots
-
-    // address[5] public administrators; 
     
-    // 20 bytes each
-    // 5 slots
-    
-
-    // uint8 constant tradeFlag = 1;
-    // uint8 constant basicFlag = 0;
-    // uint8 constant dividendFlag = 1;
-    
-
-    
-    // bytes32 public whitelistMerkleRoot2;
-    // bytes32 public whitelistMerkleRoot3;
 
     struct Payment {
         uint256 amount; // 1 slot
@@ -39,11 +24,6 @@ contract GasContract{
         // address admin; // administrators address
     }
 
-    // struct History {
-    //     address updatedBy;
-    //     uint256 blockNumber;
-    //     uint256 lastUpdate;        
-    // }
 
     enum PaymentType {
         Unknown,
