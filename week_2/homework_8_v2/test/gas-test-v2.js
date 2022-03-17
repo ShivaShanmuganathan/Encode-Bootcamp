@@ -116,68 +116,59 @@ describe("Gas1", function () {
     const root1 = merkleTree1.getHexRoot();
     const root2 = merkleTree2.getHexRoot();
     const root3 = merkleTree3.getHexRoot();
-    
-    // console.log(await gasContract.checkWhitelist(addr2.address, 2, proof));
-    
+        
     expect(await gasContract.checkWhitelist(addr1.address, root1, proof1)).to.eq(true)
     expect(await gasContract.checkWhitelist(addr2.address, root2, proof2)).to.eq(true)
     expect(await gasContract.checkWhitelist(addr3.address, root3, proof3)).to.eq(true)
     
 
-    // let whitelistAddr1 = await gasContract.whitelist(addr1.address);
-    // expect(parseInt(whitelistAddr1)).to.equal(1);
-    // let whitelistAddr2 = await gasContract.whitelist(addr2.address);
-    // expect(parseInt(whitelistAddr2)).to.equal(2);
-    // let whitelistAddr3 = await gasContract.whitelist(addr3.address);
-    // expect(parseInt(whitelistAddr3)).to.equal(3);
-
   });
 
 
-  // it("whitelist transfer works", async function () {
-  //   await addToWhitelist();
-  //   const transferTx1 = await gasContract.transfer(addr1.address, 500, "acc1");
-  //   await transferTx1.wait();
-  //   const transferTx2 = await gasContract.transfer(addr2.address, 300, "acc2");
-  //   await transferTx2.wait();
-  //   const transferTx3 = await gasContract.transfer(addr3.address, 100, "acc2");
-  //   await transferTx3.wait();
-  //   let recipient1 = ethers.Wallet.createRandom();
-  //   let recipient2 = ethers.Wallet.createRandom();
-  //   let recipient3 = ethers.Wallet.createRandom();
-  //   let sendValue1 = 250;
-  //   let sendValue2 = 150;
-  //   let sendValue3 = 50;
+  it("whitelist transfer works", async function () {
+    await addToWhitelist();
+    const transferTx1 = await gasContract.transfer(addr1.address, 500, "acc1");
+    await transferTx1.wait();
+    const transferTx2 = await gasContract.transfer(addr2.address, 300, "acc2");
+    await transferTx2.wait();
+    const transferTx3 = await gasContract.transfer(addr3.address, 100, "acc2");
+    await transferTx3.wait();
+    let recipient1 = ethers.Wallet.createRandom();
+    let recipient2 = ethers.Wallet.createRandom();
+    let recipient3 = ethers.Wallet.createRandom();
+    let sendValue1 = 250;
+    let sendValue2 = 150;
+    let sendValue3 = 50;
     
-  //   const proof1 = merkleTree.getHexProof(keccak256((addr1.address).concat("0000000000000000000000000000000000000000000000000000000000000001")))
-  //   const proof2 = merkleTree.getHexProof(keccak256((addr2.address).concat("0000000000000000000000000000000000000000000000000000000000000002")))
-  //   const proof3 = merkleTree.getHexProof(keccak256((addr3.address).concat("0000000000000000000000000000000000000000000000000000000000000003")))
-
-  //   const whiteTransferTx1 = await gasContract
-  //     .connect(addr1)
-  //     .whiteTransfer(recipient1.address, sendValue1, 1, proof1);
-  //   await whiteTransferTx1.wait();
-  //   const whiteTransferTx2 = await gasContract
-  //     .connect(addr2)
-  //     .whiteTransfer(recipient2.address, sendValue2, 2, proof2);
-  //   await whiteTransferTx2.wait();
-  //   const whiteTransferTx3 = await gasContract
-  //     .connect(addr3)
-  //     .whiteTransfer(recipient3.address, sendValue3, 3, proof3);
-  //   await whiteTransferTx3.wait();
-  //   let rec1Balance = await gasContract.balanceOf(recipient1.address);
-  //   let rec2Balance = await gasContract.balanceOf(recipient2.address);
-  //   let rec3Balance = await gasContract.balanceOf(recipient3.address);
-  //   expect(sendValue1 - 1).to.equal(rec1Balance);
-  //   expect(sendValue2 - 2).to.equal(rec2Balance);
-  //   expect(sendValue3 - 3).to.equal(rec3Balance);
-  //   let acc1Balance = await gasContract.balanceOf(addr1.address);
-  //   let acc2Balance = await gasContract.balanceOf(addr2.address);
-  //   let acc3Balance = await gasContract.balanceOf(addr3.address);
-  //   expect(sendValue1 + 1).to.equal(acc1Balance);
-  //   expect(sendValue2 + 2).to.equal(acc2Balance);
-  //   expect(sendValue3 + 3).to.equal(acc3Balance);
-  // });
+    const proof1 = merkleTree1.getHexProof(keccak256(addr1.address))
+    const proof2 = merkleTree2.getHexProof(keccak256(addr2.address))
+    const proof3 = merkleTree3.getHexProof(keccak256(addr3.address))
+    
+    const whiteTransferTx1 = await gasContract
+      .connect(addr1)
+      .whiteTransfer(recipient1.address, sendValue1, proof1);
+    await whiteTransferTx1.wait();
+    const whiteTransferTx2 = await gasContract
+      .connect(addr2)
+      .whiteTransfer(recipient2.address, sendValue2, proof2);
+    await whiteTransferTx2.wait();
+    const whiteTransferTx3 = await gasContract
+      .connect(addr3)
+      .whiteTransfer(recipient3.address, sendValue3, proof3);
+    await whiteTransferTx3.wait();
+    let rec1Balance = await gasContract.balanceOf(recipient1.address);
+    let rec2Balance = await gasContract.balanceOf(recipient2.address);
+    let rec3Balance = await gasContract.balanceOf(recipient3.address);
+    expect(sendValue1 - 1).to.equal(rec1Balance);
+    expect(sendValue2 - 2).to.equal(rec2Balance);
+    expect(sendValue3 - 3).to.equal(rec3Balance);
+    let acc1Balance = await gasContract.balanceOf(addr1.address);
+    let acc2Balance = await gasContract.balanceOf(addr2.address);
+    let acc3Balance = await gasContract.balanceOf(addr3.address);
+    expect(sendValue1 + 1).to.equal(acc1Balance);
+    expect(sendValue2 + 2).to.equal(acc2Balance);
+    expect(sendValue3 + 3).to.equal(acc3Balance);
+  });
 
   async function addToWhitelist() {
     let addrArray1 = [];
