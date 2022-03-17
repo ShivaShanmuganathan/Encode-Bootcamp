@@ -7,23 +7,21 @@ import "hardhat/console.sol";
 
 contract GasContract is EIP712{
 
+    uint16 public immutable totalSupply; // cannot be updated
+    uint16 private paymentCounter;
     address immutable contractOwner;
     string private constant SIGNING_DOMAIN = "Lazy-Voucher";
     string private constant SIGNATURE_VERSION = "1";
-    uint8 constant tradeFlag = 1;
-    uint8 constant basicFlag = 0;
-    uint8 constant dividendFlag = 1;
     uint8 constant adminLen = 5;
     
-    uint256 public immutable totalSupply; // cannot be updated
-    uint256 public paymentCounter;
+    
     // 2 slots
 
     
     mapping (address => bool) public admins;
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) public payments;
-    History[] public paymentHistory;
+    
     // 20 bytes each
     // 5 slots
 
@@ -34,20 +32,17 @@ contract GasContract is EIP712{
     }
     
     struct Payment {
-        uint256 paymentID; // 1 slot
-        bool adminUpdated; // 1 bit
-        PaymentType paymentType; 
-        address recipient; // 20 bytes 
-        bytes8 recipientName; // max 8 characters
-        address admin; // administrators address
         uint256 amount; // 1 slot
+        uint256 paymentID; // 1 slot
+        bytes8 recipientName; // max 8 characters
+        PaymentType paymentType; 
     }
 
-    struct History {
-        address updatedBy;
-        uint256 blockNumber;
-        uint256 lastUpdate;        
-    }
+    // struct History {
+    //     address updatedBy;
+    //     uint256 blockNumber;
+    //     uint256 lastUpdate;        
+    // }
 
     enum PaymentType {
         Unknown,
@@ -78,7 +73,7 @@ contract GasContract is EIP712{
     error InvalidAddress();
     error InvalidSignature();
 
-    constructor(address[] memory _admins, uint256 _totalSupply) 
+    constructor(address[] memory _admins, uint16 _totalSupply) 
     EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {
         
         contractOwner = msg.sender;
@@ -118,17 +113,16 @@ contract GasContract is EIP712{
 
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        emit Transfer(_recipient, _amount);
+        
                 
         payments[msg.sender].push(Payment(
-            ++paymentCounter,
-            false,
-            PaymentType.BasicPayment,
-            _recipient,
+            _amount,
+            paymentCounter+1,
             bytes8(bytes(_name)),
-            address(0),
-            _amount));
+            PaymentType.BasicPayment
+            ));
 
+        emit Transfer(_recipient, _amount);
         return true;   
     }
 
@@ -219,43 +213,17 @@ contract GasContract is EIP712{
     }
 
 
-    function getPaymentHistory()
-        external
-        view
-        returns (History[] memory paymentHistory_)
-    {
-        return paymentHistory;
-    }
-
     function balanceOf(address _user) external view returns (uint256) {
         return balances[_user];
     }
 
     function getTradingMode() external pure returns (bool) {
-        
-        if (tradeFlag == 1 || dividendFlag == 1) {
-            
-            return true;
-        } else {
-
-            return false;
-        }
-
-    }
-
-    // assuming addHistory is an internal function, since it changes state and is called by updatePayment
-    function addHistory(address _updateAddress)
-        private
-    {
-        
-        paymentHistory.push(History(
-            _updateAddress,
-            block.timestamp,
-            block.number
-        ));
+                
+        return true;
         
     }
 
+    
     function getPayments(address _user)
         external
         view
@@ -298,13 +266,12 @@ contract GasContract is EIP712{
             Payment storage _payment = payments[_user][ii];
 
             if (_payment.paymentID == _ID) {
-                
-                _payment.adminUpdated = true;
-                _payment.paymentType = _type;
-                _payment.admin = _user;
                 _payment.amount = _amount;
+                _payment.paymentType = _type;
                 
-                addHistory(_user);
+                
+                
+                
 
                 emit PaymentUpdated(
                     msg.sender,
@@ -313,7 +280,7 @@ contract GasContract is EIP712{
                     _payment.recipientName
                 );
 
-                payments[_user][ii] = _payment;
+                break;
             }
 
         }
