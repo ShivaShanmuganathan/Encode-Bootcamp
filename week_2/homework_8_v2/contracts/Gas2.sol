@@ -153,7 +153,7 @@ contract GasContract{
 
     function checkWhitelist(address user, bytes32 root, bytes32[] calldata merkleProof) 
     public
-    view 
+    pure 
     returns (bool)
     {   
         bytes32  leafNode = bytes32(keccak256(abi.encodePacked(user)));
