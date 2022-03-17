@@ -110,18 +110,18 @@ describe("Gas1", function () {
   it("add users to whitelist and validate key users are added with correct tier", async function () {
     await addToWhitelist();
     
-    // const proof1 = merkleTree1.getHexProof(keccak256(addr1.address))
-    // const proof2 = merkleTree2.getHexProof(keccak256(addr2.address))
-    // const proof3 = merkleTree3.getHexProof(keccak256(addr3.address))
-    // const root1 = merkleTree1.getHexRoot();
-    // const root2 = merkleTree2.getHexRoot();
-    // const root3 = merkleTree3.getHexRoot();
+    const proof1 = merkleTree1.getHexProof(keccak256(addr1.address))
+    const proof2 = merkleTree2.getHexProof(keccak256(addr2.address))
+    const proof3 = merkleTree3.getHexProof(keccak256(addr3.address))
+    const root1 = merkleTree1.getHexRoot();
+    const root2 = merkleTree2.getHexRoot();
+    const root3 = merkleTree3.getHexRoot();
     
     // console.log(await gasContract.checkWhitelist(addr2.address, 2, proof));
     
-    // expect(await gasContract.checkWhitelist(addr1.address, root1, proof1)).to.eq(true)
-    // expect(await gasContract.checkWhitelist(addr2.address, root2, proof2)).to.eq(true)
-    // expect(await gasContract.checkWhitelist(addr3.address, root3, proof3)).to.eq(true)
+    expect(await gasContract.checkWhitelist(addr1.address, root1, proof1)).to.eq(true)
+    expect(await gasContract.checkWhitelist(addr2.address, root2, proof2)).to.eq(true)
+    expect(await gasContract.checkWhitelist(addr3.address, root3, proof3)).to.eq(true)
     
 
     // let whitelistAddr1 = await gasContract.whitelist(addr1.address);
@@ -210,7 +210,7 @@ describe("Gas1", function () {
     addrArray3.push(addr3.address);
 
     
-    const merkleTree1 = new MerkleTree(
+    merkleTree1 = new MerkleTree(
       addrArray1,
       keccak256,
       { hashLeaves: true, sortPairs: true }
@@ -229,18 +229,18 @@ describe("Gas1", function () {
     )
     
     const root1 = merkleTree1.getHexRoot();
-    // const root2 = merkleTree2.getHexRoot();
-    // const root3 = merkleTree3.getHexRoot();
+    const root2 = merkleTree2.getHexRoot();
+    const root3 = merkleTree3.getHexRoot();
     
 
     let tx1 = await gasContract.addToWhitelist(root1, 1);
     await tx1.wait();
 
-    // let tx2 = await gasContract.addToWhitelist(root2, 2);
-    // await tx2.wait();
+    let tx2 = await gasContract.addToWhitelist(root2, 2);
+    await tx2.wait();
 
-    // let tx3 = await gasContract.addToWhitelist(root3, 3);
-    // await tx3.wait();
+    let tx3 = await gasContract.addToWhitelist(root3, 3);
+    await tx3.wait();
     
   }
 });
